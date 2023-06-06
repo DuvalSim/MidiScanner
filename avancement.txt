@@ -1,1 +1,3 @@
 https://stacks.stanford.edu/file/druid:bf950qp8995/Suteparuk.pdf
+
+https://github.com/nataliemuenster/231a-piano-music-identification/blob/master/main.py

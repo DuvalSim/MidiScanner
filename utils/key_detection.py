@@ -31,9 +31,13 @@ def detect_white_keys(im_bw, startKey):
 
     im_bottom = im_bw[int(imheight - (imheight / 5)):imheight, :]
     cv2.imwrite("./data/im_bottom.jpg", im_bottom)
-
+    cv2.imshow("im_bot", im_bottom)
+    cv2.waitKey(0)
     [gap_width, wk_width, start] = findAverageWidths(im_bottom)
+    print("average_widths")
+    print(gap_width, wk_width, start)
 
+    print("image bottom shape", im_bottom.shape)
     [numWhiteKeys, whiteKeys] = workTowardRight(start, wk_width, gap_width, im_bottom.shape[1], imheight)
     [numWhiteKeys, whiteKeys] = workTowardLeft(whiteKeys, numWhiteKeys, start, wk_width, gap_width, imheight)
 
@@ -47,7 +51,7 @@ def detect_white_keys(im_bw, startKey):
 # gather a few sample keys to find the average width of a white key and ave width of key gap
 def findAverageWidths(im_bottom):
     widths = []
-    start = im_bottom.shape[1] / 3
+    start = int(im_bottom.shape[1] / 3)
     start_edge = start
     pixel = start
     firstKey = True
@@ -75,7 +79,7 @@ def findAverageWidths(im_bottom):
 
             if (abs(start_edge - pixel) > wk_min_width):  # if you detected a key
                 widths.append(abs(start_edge - pixel))
-                print("start_edge, pixel ", start_edge, pixel)
+
                 numSampleKeys += 1
                 # move past white-black-white gap to get to next key
                 gap_size = 0
@@ -97,9 +101,6 @@ def findAverageWidths(im_bottom):
 
     gap_width = sum(gap_sizes) / numGaps
     wk_width = sum(widths) / numSampleKeys
-
-    print
-    gap_width, wk_width, start
 
     return gap_width, wk_width, start
 
@@ -141,6 +142,7 @@ def organizeWhiteKeys(whiteKeys):
     zeros = np.zeros((4, 1))
 
     # remove rows that are all 0's
+    print(whiteKeys.shape[0])
     for i in range(0, whiteKeys.shape[0]):
         if not np.array_equal(whiteKeys[i, :].reshape(4, 1), zeros):
             nonzero_row_indices.append(i)
@@ -156,12 +158,17 @@ def organizeWhiteKeys(whiteKeys):
 def workTowardRight(start_edge, wk_width, gap_width, imwidth, imheight):
     whiteKeys = np.zeros((52, 4))
     last_edge = start_edge
-    numWhiteKeys = 0
+    numWhiteKeys = 1
     first_edge = start_edge
+
+    print("workTowardRight")
+    print("start edge", start_edge)
+
 
     while first_edge < (imwidth - gap_width):  # work across the photo towards the right
         if numWhiteKeys < 52:
             first_edge = last_edge + gap_width
+            print("numWhiteKeys", numWhiteKeys - 1)
             whiteKeys[numWhiteKeys - 1][0] = 0
             whiteKeys[numWhiteKeys - 1][1] = imheight
             whiteKeys[numWhiteKeys - 1][2] = first_edge

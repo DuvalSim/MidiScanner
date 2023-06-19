@@ -1,6 +1,6 @@
 import cv2
 import os
-from utils import preprocessing, key_detection
+from git_utils import preprocessing, key_detection
 
 
 def get_rect(whiteKeys, i):

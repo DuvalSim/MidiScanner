@@ -62,5 +62,5 @@ def display_connected_components(num_labels, labeled_image, stats, centroids, bl
 def put_white_notes_on_image(base_image, notes):
 	for note in notes:
 		text_point = (int((note.start_x + note.end_x) / 2), base_image.shape[0] - 10)
-		base_image = cv2.putText(base_image, note.note, text_point, fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=1, color=(255, 0, 0), thickness=1)
+		base_image = cv2.putText(base_image, note.note, text_point, fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=0.5, color=(255, 0, 0), thickness=1)
 	return base_image

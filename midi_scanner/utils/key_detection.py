@@ -88,3 +88,4 @@ def get_white_keys(clean_frame):
 
 	cv2.imshow("notes", white_notes_img)
 	cv2.waitKey(0)
+	return white_notes

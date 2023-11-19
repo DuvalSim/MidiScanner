@@ -51,12 +51,10 @@ def display_connected_components(num_labels, labeled_image, stats, centroids, bl
 		centroid_x, centroid_y = centroids[label]
 
 		black_note = black_note_string[offset + (label - 1) * 2: offset + (label - 1) * 2 + 2]
-		print(black_note)
 		img_notes = cv2.putText(img_notes, black_note, (int(centroid_x), int(centroid_y)),
-												fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=1, color=(255, 255, 255), thickness=1)
+												fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=0.4, color=(255, 255, 255), thickness=1)
 
 	cv2.imshow('Note img', img_notes)
-	cv2.waitKey(0)
 
 
 def put_white_notes_on_image(base_image, notes):
@@ -64,3 +62,11 @@ def put_white_notes_on_image(base_image, notes):
 		text_point = (int((note.start_x + note.end_x) / 2), base_image.shape[0] - 10)
 		base_image = cv2.putText(base_image, note.note, text_point, fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=0.5, color=(255, 0, 0), thickness=1)
 	return base_image
+
+def display_pressed_keys(base_img, keys):
+	result_img = base_img.copy()
+
+	for key in keys:
+		result_img = cv2.rectangle(result_img, (key.start_x, base_img.shape[0] - 10),( key.end_x, base_img.shape[0]) , (255, 0, 0), 3)
+
+	cv2.imshow("Pressed keys", result_img)

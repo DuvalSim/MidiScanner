@@ -13,6 +13,7 @@ def _get_keys_from_lines(lines, start_key, img_width):
 	lines_x = [int(l[0][0]) for l in lines]
 	lines_x = np.sort(lines_x).tolist()
 
+	# add line with x = 0 and x=img_width at begining and end of the list
 	lines_x.insert(0, 0)
 	lines_x.append(img_width)
 
@@ -20,11 +21,17 @@ def _get_keys_from_lines(lines, start_key, img_width):
 
 	note_idx = 0
 
+	min_note_width = img_width*0.01
+	print(f"[_get_keys_from_lines] - using {min_note_width} as minimum between two notes")
+	
+
 	for i in range(len(lines_x) - 1):
 		l_x = lines_x[i]
 		l_x_1 = lines_x[i + 1]
 
-		if l_x_1 - l_x > 10:
+		# at least 10 pixels to make sure the two lines are not two side of the edge of the key.
+		
+		if l_x_1 - l_x > min_note_width:
 			current_note = note_string[offset + note_idx * 2: offset + note_idx * 2 + 2]
 			note_idx += 1
 			notes.append(Key(current_note, start_x=l_x, end_x=l_x_1))
@@ -32,8 +39,8 @@ def _get_keys_from_lines(lines, start_key, img_width):
 	return notes
 
 
-def get_black_keys(base_img, start_key="a0"):
-	img_grey = cv2.cvtColor(base_img, cv2.COLOR_RGB2GRAY)
+def get_black_keys(clean_frame, start_key="a0"):
+	img_grey = cv2.cvtColor(clean_frame, cv2.COLOR_RGB2GRAY)
 	thresh, img_binary = cv2.threshold(img_grey, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
 	img_negative = cv2.bitwise_not(img_binary)
@@ -54,15 +61,16 @@ def get_black_keys(base_img, start_key="a0"):
 	for label in range(1, num_labels):  # skip background
 		left, top, width, height, area = stats[label]
 		black_note = blackNoteString[offset + (label - 1) * 2: offset + (label - 1) * 2 + 2]
-		black_keys.append({
-			"left": left,
-			"top": top,
-			"width": width,
-			"centroid": centroids[label],
-			"height": height,
-			"note": black_note
-		})
+		# black_keys.append({
+		# 	"left": left,
+		# 	"top": top,
+		# 	"width": width,
+		# 	"centroid": centroids[label],
+		# 	"height": height,
+		# 	"note": black_note
+		# })
 
+		black_keys.append(Key(black_note, left, left + width))
 	return black_keys
 
 
@@ -75,12 +83,10 @@ def get_white_keys(clean_frame):
 	canny_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 	canny_binary = cv2.Canny(canny_binary, threshold1=120, threshold2=200)
 
-	cv2.imshow("canny_binary", canny_binary)
-
 	# Get lines with theta = 0 (vertical lines)
 	lines_canny = cv2.HoughLines(canny_binary, rho=1, theta=np.pi / 180, threshold=10, min_theta=0, max_theta=np.pi / 180)
 
-	display_lines("canny_lines", clean_frame, lines_canny)
+	display_lines("White key detection: clines from houghlines", clean_frame, lines_canny)
 
 	white_notes = _get_keys_from_lines(lines_canny, "A0", im_bottom.shape[1])
 

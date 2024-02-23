@@ -3,3 +3,25 @@ https://stacks.stanford.edu/file/druid:bf950qp8995/Suteparuk.pdf
 https://github.com/nataliemuenster/231a-piano-music-identification/blob/master/main.py
 
 Check get white keys avec le first frame. (avant on prenais une image cropped)
+
+
+to put note length into clusters:
+https://web.mit.edu/sjgershm/www/GershmanBlei12.pdf
+https://stats.stackexchange.com/questions/81386/what-kind-of-learning-algorithm-is-suitable-for-classifying-unknown-number-of-gr
+
+https://en.wikipedia.org/wiki/Kernel_density_estimation
+
+60 bpm
+
+1bps
+
+30 fps
+
+>> 1 noire = 30 frames (fps/bps)
+
+nb_frames_noire = fps/bps
+
+bpm = (fps/nb_frame_noire)*60
+bpm 
+
+https://stackoverflow.com/questions/43060669/python-how-to-rename-musescore-path-in-package-music21

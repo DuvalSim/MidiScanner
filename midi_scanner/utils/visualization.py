@@ -43,7 +43,7 @@ def display_connected_components(num_labels, labeled_image, stats, centroids, bl
 
 	colored_image = colors[labeled_image]
 
-	offset = black_note_string.find("a0")
+	offset = black_note_string.find("c1")
 
 	img_notes = colored_image.copy()
 	for label in range(1, num_labels):
@@ -67,6 +67,8 @@ def display_pressed_keys(base_img, keys):
 	result_img = base_img.copy()
 
 	for key in keys:
-		result_img = cv2.rectangle(result_img, (key.start_x, base_img.shape[0] - 10),( key.end_x, base_img.shape[0]) , (255, 0, 0), 3)
+		
+		color = (255,0,0) if key.is_black() else (0,0,255)
+		result_img = cv2.rectangle(result_img, (key.start_x, base_img.shape[0] - 10),( key.end_x, base_img.shape[0]) ,color, 3)
 
 	cv2.imshow("Pressed keys", result_img)

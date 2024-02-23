@@ -74,21 +74,21 @@ def get_black_keys(clean_frame, start_key="a0"):
 	return black_keys
 
 
-def get_white_keys(clean_frame):
+def get_white_keys(clean_frame, start_key = "A0"):
 	im_height = clean_frame.shape[0]
-	im_bottom = clean_frame[int(im_height - (im_height / 5)):im_height, :]
+	im_bottom = clean_frame[int(im_height - (im_height / 3)):im_height, :]
 
 	gray = cv2.cvtColor(im_bottom, cv2.COLOR_BGR2GRAY)
 
 	canny_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 	canny_binary = cv2.Canny(canny_binary, threshold1=120, threshold2=200)
-
+	cv2.imshow("canny", canny_binary)
 	# Get lines with theta = 0 (vertical lines)
-	lines_canny = cv2.HoughLines(canny_binary, rho=1, theta=np.pi / 180, threshold=10, min_theta=0, max_theta=np.pi / 180)
+	lines_canny = cv2.HoughLines(canny_binary, rho=1, theta=np.pi / 180, threshold=20, min_theta=0, max_theta=np.pi / 180)
 
 	display_lines("White key detection: clines from houghlines", clean_frame, lines_canny)
 
-	white_notes = _get_keys_from_lines(lines_canny, "A0", im_bottom.shape[1])
+	white_notes = _get_keys_from_lines(lines_canny, start_key, im_bottom.shape[1])
 
 	white_notes_img = put_white_notes_on_image(base_image=clean_frame.copy(), notes=white_notes)
 

@@ -1,39 +1,42 @@
-import cv2
-import os
-from git_utils import preprocessing, key_detection
+import tkinter as tk
+
+class MyDialog(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        #self.toplevel = tk.Toplevel(parent)
+        self.var = tk.StringVar()
+        label = tk.Label(self, text="Pick something:")
+        om = tk.OptionMenu(self, self.var, "one", "two","three")
+        button = tk.Button(self, text="OK", command=self.destroy)
+        label.pack(side="top", fill="x")
+        om.pack(side="top", fill="x")
+        button.pack()
+
+    def show(self):
+        #self.deiconify()
+        self.wait_window()
+        value = self.var.get()
+        return value
 
 
-def get_rect(whiteKeys, i):
-    return (int(whiteKeys[i,2]), int(whiteKeys[i,1])), (int(whiteKeys[i,3]), int(whiteKeys[i,0]))
-    #return (int(whiteKeys[i, 2]), int(whiteKeys[i, 1])), (int(whiteKeys[i, 3]), 159-32)
+class Example(tk.Frame):
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
 
-images_dir = "media"
-base_img_name = "FirstFrame.png"
+        self.button = tk.Button(self, text="Click me!", command=self.on_click)
+        self.label = tk.Label(self, width=80)
+        self.label.pack(side="top", fill="x")
+        self.button.pack(pady=20)
 
-base_img = cv2.imread(os.path.join(images_dir, base_img_name))
+    def on_click(self):
+        window = MyDialog(self)
+        window.pack()
+        result = window.show()
+        self.label.configure(text="your result: %s" % result)
 
+if __name__ == "__main__":
+    root = tk.Tk()
+    Example(root).pack(fill="both", expand=True)
+    root.mainloop()
 
-binary_rectified_sobel, binary_rectified = preprocessing.getBinaryImages(base_img)
-
-
-
-
-whiteKeys, numWhiteKeys, white_notes = key_detection.detect_white_keys(binary_rectified_sobel, "A3")
-
-
-pt1, pt2 = get_rect(whiteKeys, 40)
-cv2.rectangle(base_img, pt1, pt2, color=(0,0,255))
-pt1, pt2 = get_rect(whiteKeys, 19)
-cv2.rectangle(base_img, pt1, pt2, color=(0,0,255))
-pt1, pt2 = get_rect(whiteKeys, 4)
-cv2.rectangle(base_img, pt1, pt2, color=(0,0,255))
-
-cv2.imshow("keys", base_img)
-print("White Keys:")
-print(whiteKeys)
-
-cv2.waitKey(0)
-
-# closing all open windows
-cv2.destroyAllWindows()
-
+    #https://stackoverflow.com/questions/29497391/creating-a-tkinter-class-and-waiting-for-a-return-value

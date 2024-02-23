@@ -47,7 +47,7 @@ cv2.destroyAllWindows()
 nb_frame = 1
 
 
-# cap.set(cv2.CAP_PROP_POS_FRAMES,450)
+cap.set(cv2.CAP_PROP_POS_FRAMES,420)
 # ret, current_frame = cap.read()
 
 # current_frame = get_cropped_image(current_frame)

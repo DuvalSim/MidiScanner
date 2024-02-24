@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 
 SELECT_FIRST_FRAME_WINDOW_NAME = 'Select first frame'
 
+# TODO: Change color of image
 
 class SelectCleanFrameWindow(tk.Frame):    
 
@@ -18,7 +19,7 @@ class SelectCleanFrameWindow(tk.Frame):
 
         video_nb_frames = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
-        self.frame_idx = tk.StringVar()
+        self.frame_idx = tk.IntVar()
         scale = tk.Scale(self, from_=0, to=video_nb_frames -1 , orient=tk.HORIZONTAL, variable=self.frame_idx, width=15, command=self.change_current_frame)
 
         button = tk.Button(self, text="Confirm", command=self.destroy)
@@ -32,9 +33,9 @@ class SelectCleanFrameWindow(tk.Frame):
         self.img_label.pack(side="top")
 
 
-    def get_user_frame(self):
+    def get_user_frame(self) -> int:
         self.wait_window()
-        frame_idx = self.frame_idx.get()
+        frame_idx = int(self.frame_idx.get())
         self.video_capture.release()
         return frame_idx
     

@@ -1,6 +1,8 @@
 import cv2
 from midi_scanner.utils import preprocessing as preproc
 
+import logging
+
 CROP_KEYBOARD_WINDOW_NAME = 'Crop keyboard'
 CROP_PREVIEW_WINDOW_NAME = 'Preview'
 CROP_RESULT_WINDOW_NAME = "Cropped image"
@@ -9,9 +11,12 @@ class CroppingWindow():
 
     def __init__(self, video_filepath, frame_idx) -> None:
         
+        self.logger = logging.getLogger("CroppingWindow")
         video_capture = cv2.VideoCapture(video_filepath)
         video_capture.set(cv2.CAP_PROP_POS_FRAMES,frame_idx)
         _, self.clean_frame = video_capture.read()
+
+        self.logger.debug_image(self.clean_frame, "Title original")
 
         video_capture.release()
 

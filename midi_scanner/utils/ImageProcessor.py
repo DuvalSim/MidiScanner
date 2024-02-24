@@ -2,28 +2,18 @@ import cv2
 
 class ImageProcessor:
 
-    _instance = None
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super().__new__(cls)
-        return cls._instance
+    # ROI is expected to be (top_left_x, top_left_y, bottom_left_x, bottom_left_y)
+    def __init__(self, keyboard_roi, bottom_ratio = 3, top_start_ratio = 5, top_end_ratio =2.5):
 
 
+        self.bottom_ratio = bottom_ratio
+        self.keyboard_region_y = (keyboard_roi[1],keyboard_roi[3])
+        self.keyboard_region_x = (keyboard_roi[0],keyboard_roi[2])
+        self.top_start_ratio = top_start_ratio
+        self.top_end_ratio = top_end_ratio
 
-    def __init__(self, keyboard_region_y=None, keyboard_region_x = None, bottom_ratio = 3, top_start_ratio = 5, top_end_ratio =2.5):
-        if not hasattr(self, 'initialized'):
-            
-            self.bottom_ratio = bottom_ratio
-            self.keyboard_region_y = keyboard_region_y
-            self.keyboard_region_x = keyboard_region_x
-            self.top_start_ratio = top_start_ratio
-            self.top_end_ratio = top_end_ratio
-
-            self.initialized = True
-
-        elif keyboard_region_y is not None:
-             raise ValueError("ImageProcessor already initialized - argument keyboard_region must not be set")
+        self.initialized = True
 
 
     def get_keyboard_image(self, image):

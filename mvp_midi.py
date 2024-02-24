@@ -1,3 +1,8 @@
+import argparse
+from midi_scanner.NoteRecorder import NoteRecorder
+from midi_scanner.utils.ImageLogger import setup_image_logger
+import logging
+
 import tkinter as tk   # from tkinter import Tk for Python 3.x
 from tkinter.filedialog import askopenfilename
 from ctypes import windll
@@ -5,6 +10,8 @@ from midi_scanner.GUI.CroppingWindow import CroppingWindow
 from midi_scanner.GUI.SelectCleanFrameWindow import SelectCleanFrameWindow
 
 import cv2
+
+from midi_scanner.utils.ImageProcessor import ImageProcessor
 
 windll.shcore.SetProcessDpiAwareness(1)
 
@@ -14,41 +21,149 @@ class ApplicationController:
         self.current_window = None
         self.window_stack = []  # Stack to keep track of opened windows
 
+        self.music_video_filepath = ""
+
     def show_window(self, window_class):
         if self.current_window:
             self.current_window.destroy()
         self.current_window = window_class(self.root, self)
 
+
+    def record_notes(self,  ):
+
+        image_processor = ImageProcessor(keyboard_region_y=(keyboard_roi[1],keyboard_roi[3]), keyboard_region_x=(keyboard_roi[0],keyboard_roi[2]))
+        first_frame = image_processor.get_keyboard_image(first_frame)
+
+        cv2.imshow("first frame", first_frame)
+
+        keyboard = Keyboard(first_frame, "C3", "c3")
+
+
+
+        fps = cap.get(cv2.CAP_PROP_FPS)
+
+        #cap.set(cv2.CAP_PROP_POS_FRAMES, int(fps * 73) + 15)
+        #ret, current_frame = cap.read()
+
+        #current_frame = get_cropped_image(current_frame)
+        #keyboard.get_pressed_notes(current_frame=current_frame)
+
+        #cv2.imshow("current frame", current_frame)
+
+        k = cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        nb_frame = 1
+
+
+
+        # ret, current_frame = cap.read()
+
+        # current_frame = get_cropped_image(current_frame)
+        # keyboard.get_pressed_keys(current_frame=current_frame)
+
+        # cv2.imshow("current frame", current_frame)
+
+        note_recorder = NoteRecorder()
+
+        while True:
+            # Read the next frame from the video
+            ret, frame = cap.read()
+
+            # Check if the frame was successfully read
+            if not ret:
+                break
+
+            # Process the frame here (e.g. display it)
+            cropped_frame = image_processor.get_keyboard_image(frame)
+            bot, top = get_lower_image(cropped_frame)
+            #cv2.imshow("bot", bot)
+            #cv2.imshow("top", top) 
+
+            pressed_keys = keyboard.get_pressed_keys(cropped_frame)
+            
+            #print(pressed_keys)
+            display_pressed_keys(frame, pressed_keys)
+
+            # if nb_frame%1000 == 0:
+            #     cv2.waitKey(0)
+            
+            note_recorder.populate_next_frame(pressed_keys)
+
+            #cv2.waitKey(0)
+            #print(nb_frame)
+            nb_frame += 1
+            # print(nb_frame)
+            # if nb_frame > 2300:
+            #     k = cv2.waitKey(0)
+            
+            # Wait for a key press to exit
+            if (k == ord('q')) or (nb_frame > 1340):
+                cv2.destroyAllWindows()
+                break
+
+
+        cap.release()
+
+        # Release the video capture object and close all windows
+
+        note_recorder.end_recording()
     def start(self):
+
+        
+
         self.root.withdraw()
         # https://stackoverflow.com/questions/41083597/trackbar-hsv-opencv-tkinter-python
         
-        music_video_filepath = askopenfilename(filetypes = (("videos", "*.mp4"), ("all files", "*.*"))) # show an "Open" dialog box and return the path to the selected file
+        self.music_video_filepath = askopenfilename(filetypes = (("videos", "*.mp4"), ("all files", "*.*"))) # show an "Open" dialog box and return the path to the selected file
 
         self.root.deiconify()
 
-        new_frame = SelectCleanFrameWindow(self.root, music_video_filepath)
+        new_frame = SelectCleanFrameWindow(self.root, self.music_video_filepath)
         new_frame.pack()
-        value = new_frame.get_user_frame()
+        clean_frame_idx = new_frame.get_user_frame()
 
-        print(value)
+        self.root.withdraw()
+        self.keyboard_roi = CroppingWindow(video_filepath=self.music_video_filepath, frame_idx=clean_frame_idx).get_cropped_dimension()
+
+        NoteRecorder().record_notes(video_filepath=self.music_video_filepath, starting_frame=clean_frame_idx, ending_frame=3, keyboard_roi=self.keyboard_roi,first_white_key="C3", first_black_key="c3")
         
-        WINDOW_NAME_SELECT_FIRST_FRAME = 'Select first frame'
+        print(self.keyboard_roi)
 
-        
-        
 
-        first_frame_idx = 0
 
-        print(music_video_filepath)
+
 
         self.root.destroy()
 
 
     
 def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-d', '--debug',
+        help="Print lots of debugging statements",
+        action="store_const", dest="loglevel", const=logging.DEBUG,
+        default=logging.WARNING,
+    )
+    parser.add_argument(
+        '-v', '--verbose',
+        help="Be verbose",
+        action="store_const", dest="loglevel", const=logging.INFO,
+    )
+
+    args = parser.parse_args()
+    setup_image_logger(args.loglevel)
+    
     root = tk.Tk()
     root.title("My Tkinter Application")
+
+    test_logger = logging.getLogger("test2")
+    test_mine = logging.getLogger("suuu")
+
+
+    test_mine.debug("this is from mine")
+    test_logger.debug("this is from other")
 
     app_controller = ApplicationController(root)
 

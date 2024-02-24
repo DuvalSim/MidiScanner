@@ -4,7 +4,6 @@ import cv2
 from midi_scanner.utils.key_detection import get_black_keys, get_white_keys
 from midi_scanner.utils.preprocessing import get_lower_image
 
-from midi_scanner.utils.ImageLogger import ImageLogger
 
 class Keyboard:
 

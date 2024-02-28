@@ -25,3 +25,23 @@ bpm = (fps/nb_frame_noire)*60
 bpm 
 
 https://stackoverflow.com/questions/43060669/python-how-to-rename-musescore-path-in-package-music21
+
+
+Idea:
+
+Récupérer les bpms + le type de mesure.
+
+Diviser les mesures en starting frame
+
+regrouper sur les plus proches.
+
+-------------------------------------
+
+avoir le BPM + type de mesure !
+
+Arrondir les frames à la dizaine la plus proche ?
+
+avancement:
+NoteRecorder: record notes
+
+

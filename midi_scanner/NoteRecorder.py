@@ -9,6 +9,8 @@ from midi_scanner.utils.ImageProcessor import ImageProcessor
 
 import cv2
 
+import logging
+
 class NoteRecorder:
     
     def __init__(self) -> None:
@@ -16,6 +18,8 @@ class NoteRecorder:
         self._notes_playing:List[PlayedNote] = []
         self._notes_played:List[PlayedNote] = []
         self._current_frame = 0
+
+        self.logger= logging.getLogger("NoteRecorder")
 
     
 
@@ -91,9 +95,6 @@ class NoteRecorder:
     
     def record_notes(self, video_filepath, starting_frame, ending_frame, keyboard_roi, first_white_key, first_black_key ):
 
-
-        self.logger.debug("test")
-        exit(0)
         self._notes_playing = []
         self._notes_played = []
         self._current_frame = 0
@@ -131,11 +132,12 @@ class NoteRecorder:
             cropped_frame = image_processor.get_keyboard_image(current_frame)
 
             bot, top = image_processor.get_lower_image(cropped_frame)
-            
+
+            self.logger.debug_image(cropped_frame, "Current frame")            
             
             pressed_keys = keyboard.get_pressed_keys(cropped_frame)
             
-            #print(pressed_keys)
+            
             display_pressed_keys(frame, pressed_keys)
 
             # if nb_frame%1000 == 0:

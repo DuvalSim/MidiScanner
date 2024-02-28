@@ -92,7 +92,7 @@ while True:
     # if nb_frame%1000 == 0:
     #     cv2.waitKey(0)
     
-    note_recorder.populate_next_frame(pressed_keys)
+    note_recorder._populate_next_frame(pressed_keys)
 
     #cv2.waitKey(0)
     #print(nb_frame)
@@ -111,7 +111,7 @@ cap.release()
 
 # Release the video capture object and close all windows
 
-note_recorder.end_recording()
+note_recorder._end_recording()
 
 note_recorder.sort_played_notes()
 

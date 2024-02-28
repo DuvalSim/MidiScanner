@@ -11,6 +11,10 @@ import cv2
 
 import logging
 
+from midi_scanner.utils.visualization import display_pressed_keys
+
+from typing import Callable
+
 class NoteRecorder:
     
     def __init__(self) -> None:
@@ -23,7 +27,7 @@ class NoteRecorder:
 
     
 
-    def populate_next_frame(self, pressed_keys:List[Key]):
+    def _populate_next_frame(self, pressed_keys:List[Key]):
         
         self._current_frame += 1
 
@@ -63,12 +67,12 @@ class NoteRecorder:
             self._notes_playing.append(PlayedNote(pressed_key.note, first_frame=self._current_frame))
         
 
-    def end_recording(self):
+    def _end_recording(self):
 
         if len(self._notes_playing) > 0:
             print("WARNING - a note is still playing")
 
-            self.populate_next_frame([])
+            self._populate_next_frame([])
 
     
     def sort_played_notes(self):
@@ -93,7 +97,7 @@ class NoteRecorder:
     def get_notes_recorded(self) -> List[PlayedNote]:
         return self._notes_played
     
-    def record_notes(self, video_filepath, starting_frame, ending_frame, keyboard_roi, first_white_key, first_black_key ):
+    def record_notes(self, video_capture, starting_frame, ending_frame, keyboard_roi, first_white_key, first_black_key, status_callback: Callable[[float],None] = None ):
 
         self._notes_playing = []
         self._notes_played = []
@@ -101,15 +105,7 @@ class NoteRecorder:
 
         # TODO: add ratio for image
         image_processor = ImageProcessor(keyboard_roi)
-
-        video_capture = cv2.VideoCapture(video_filepath)
-
-        # Check if the video file was successfully opened
-        if not video_capture.isOpened():
-            print('Error opening video file')
-            raise ValueError(f"File {video_filepath} could not be opened")
-        
-
+ 
         total_nb_frames = video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
         video_capture.set(cv2.CAP_PROP_POS_FRAMES,starting_frame)
 
@@ -121,6 +117,9 @@ class NoteRecorder:
 
         fps = video_capture.get(cv2.CAP_PROP_FPS)
 
+        ending_frame = min(ending_frame, total_nb_frames -1)
+
+        nb_frame = 0
         while True:
             # Read the next frame from the video
             ret, current_frame = video_capture.read()
@@ -131,51 +130,43 @@ class NoteRecorder:
 
             cropped_frame = image_processor.get_keyboard_image(current_frame)
 
-            bot, top = image_processor.get_lower_image(cropped_frame)
+            #bot, top = image_processor.get_lower_image(cropped_frame)
 
             self.logger.debug_image(cropped_frame, "Current frame")            
             
             pressed_keys = keyboard.get_pressed_keys(cropped_frame)
             
             
-            display_pressed_keys(frame, pressed_keys)
-
-            # if nb_frame%1000 == 0:
-            #     cv2.waitKey(0)
+            display_pressed_keys(cropped_frame, pressed_keys, level=logging.DEBUG)
             
-            note_recorder.populate_next_frame(pressed_keys)
-
-            #cv2.waitKey(0)
-            #print(nb_frame)
+            self._populate_next_frame(pressed_keys)
+            
             nb_frame += 1
-            # print(nb_frame)
-            # if nb_frame > 2300:
-            #     k = cv2.waitKey(0)
+
+            if nb_frame%100 == 0:
+                self.logger.debug(f"Doing [{nb_frame}]/[{ending_frame}]")
+                if status_callback is not None:
+                    status_callback((nb_frame/ending_frame)*100)
+
             
+            k = cv2.waitKey(1)
             # Wait for a key press to exit
-            if (k == ord('q')) or (nb_frame > 1340):
+            if (k == ord('q')) or (nb_frame >= ending_frame):
                 cv2.destroyAllWindows()
                 break
 
-
-        cap.release()
-
         # Release the video capture object and close all windows
 
-        note_recorder.end_recording()
+        self._end_recording()
 
-        note_recorder.sort_played_notes()
+        self.sort_played_notes()
 
-        note_recorder.get_starting_frame_histogram()
+        #self.get_starting_frame_histogram()
         #note_recorder.round_frames()
 
-        # note_recorder.get_starting_frame_histogram()
 
-        note_nb_frames = [ played_note.nb_frame for played_note in  note_recorder.get_notes_recorded()]
+        note_nb_frames = [ played_note.nb_frame for played_note in  self._notes_played]
 
-        RYTHM_LENGTH = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3 , 4]
-
-        notes_recorded = note_recorder.get_notes_recorded()
-        
+        RYTHM_LENGTH = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3 , 4]        
 
 

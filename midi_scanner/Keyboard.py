@@ -4,6 +4,7 @@ import cv2
 from midi_scanner.utils.key_detection import get_black_keys, get_white_keys
 from midi_scanner.utils.preprocessing import get_lower_image
 
+import logging
 
 class Keyboard:
 
@@ -16,7 +17,7 @@ class Keyboard:
         self.white_keys = []
         self.black_keys = []
         self.img_clear_keyboard = img_clear_keyboard
-        self._logger = ImageLogger(__name__)
+        self._logger = logging.getLogger(__name__)
 
         self._populate_keys(img_clear_keyboard, white_start_key, black_start_key)
 

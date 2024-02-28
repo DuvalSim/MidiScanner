@@ -3,6 +3,7 @@ from midi_scanner import Key
 import numpy as np
 import colorsys
 
+import logging
 
 def generate_color_array(n):
     color_array = np.ndarray(shape=(n, 3), dtype=np.uint8)
@@ -63,7 +64,7 @@ def put_white_notes_on_image(base_image, notes):
 		base_image = cv2.putText(base_image, note.note, text_point, fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=0.5, color=(255, 0, 0), thickness=1)
 	return base_image
 
-def display_pressed_keys(base_img, keys):
+def display_pressed_keys(base_img, keys, level=logging.DEBUG):
 	result_img = base_img.copy()
 
 	for key in keys:
@@ -71,4 +72,4 @@ def display_pressed_keys(base_img, keys):
 		color = (255,0,0) if key.is_black() else (0,0,255)
 		result_img = cv2.rectangle(result_img, (key.start_x, base_img.shape[0] - 10),( key.end_x, base_img.shape[0]) ,color, 3)
 
-	cv2.imshow("Pressed keys", result_img)
+	logging.getLogger("Visualization").log_image_factory(result_img, "pressed keys", level)

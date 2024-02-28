@@ -94,6 +94,18 @@ def warning_image(self, image, title='Warning Image'):
 def error_image(self, image, title='Error Image'):
     show_image(self, image, title, logging.ERROR)
 
+def log_image_factory(self, image, title, level):
+    
+    if level == logging.INFO:
+        self.info_image(image, title)
+    elif level == logging.WARNING:
+        self.warning_image(image, title)
+    elif level == logging.ERROR:
+        self.error_image(image, title)
+    elif level == logging.DEBUG:
+        self.debug_image(image, title)
+    else:
+        raise ValueError(f"[{level}] is not handled yet")
 
 def setup_image_logger(level):
     logging.basicConfig(level=level)
@@ -102,5 +114,7 @@ def setup_image_logger(level):
     logging.Logger.info_image = info_image
     logging.Logger.warning_image = warning_image
     logging.Logger.error_image = error_image
+    logging.Logger.log_image_factory = log_image_factory
+
 
 

@@ -7,6 +7,7 @@ from midi_scanner.utils.ImageLogger import setup_image_logger
 import logging
 
 import tkinter as tk   # from tkinter import Tk for Python 3.x
+from tkinter.ttk import Progressbar 
 from tkinter.filedialog import askopenfilename
 from ctypes import windll
 from midi_scanner.GUI.CroppingWindow import CroppingWindow
@@ -21,6 +22,8 @@ windll.shcore.SetProcessDpiAwareness(1)
 SELECT_FIRST_FRAME_LABEL= 'Select first frame (with clean keyboard)'
 SELECT_LAST_FRAME_LABEL = 'Select last frame to handle'
 
+RECORD_IN_PROGRESS_WINDOW_NAME = 'Detecting notes played...'
+
 class ApplicationController:
     def __init__(self, root):
         self.root = root
@@ -33,16 +36,6 @@ class ApplicationController:
         if self.current_window:
             self.current_window.destroy()
         self.current_window = window_class(self.root, self)
-
-
-    def record_notes(self,  ):
-
-        image_processor = ImageProcessor(keyboard_region_y=(keyboard_roi[1],keyboard_roi[3]), keyboard_region_x=(keyboard_roi[0],keyboard_roi[2]))
-        first_frame = image_processor.get_keyboard_image(first_frame)
-
-        cv2.imshow("first frame", first_frame)
-
-        keyboard = Keyboard(first_frame, "C3", "c3")
 
     def __open_video(self, video_path):
         # Attempt to open the video file
@@ -63,7 +56,24 @@ class ApplicationController:
         logging.debug(f"Video file opened successfully. FPS: {self.video_fps},\
                       Frame count: {self.video_frame_count}, Resolution: {self.video_width}x{self.video_height}")
         
-        
+    def run_record_note_progress(self) -> callable:
+        #start progress bar
+
+        record_note_progress_popup = tk.Toplevel()
+        tk.Label(record_note_progress_popup, text=RECORD_IN_PROGRESS_WINDOW_NAME).grid(row=0,column=0)
+
+        progress_var = tk.DoubleVar()
+        progress_bar = Progressbar(record_note_progress_popup, variable=progress_var, maximum=100)
+        progress_bar.grid(row=1, column=0)#.pack(fill=tk.X, expand=1, side=tk.BOTTOM)
+
+        progress_var.set(0)
+
+        def update_progress_var(value):
+            progress_var.set(value)
+            if value == 100:
+                record_note_progress_popup.destroy()
+
+        return update_progress_var
 
 
     def run(self):
@@ -89,7 +99,8 @@ class ApplicationController:
         self.root.withdraw()
         self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
 
-        NoteRecorder().record_notes(video_capture=self.video_capture, starting_frame=clean_frame_idx, ending_frame=last_frame_idx, keyboard_roi=self.keyboard_roi,first_white_key="C3", first_black_key="c3")
+        status_callback = self.run_record_note_progress()
+        NoteRecorder().record_notes(video_capture=self.video_capture, starting_frame=clean_frame_idx, ending_frame=last_frame_idx, keyboard_roi=self.keyboard_roi,first_white_key="C3", first_black_key="c3", status_callback=status_callback)
         
         print(self.keyboard_roi)
 

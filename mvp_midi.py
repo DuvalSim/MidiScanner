@@ -59,7 +59,7 @@ class ApplicationController:
     def run_record_note_progress(self) -> callable:
         #start progress bar
 
-        record_note_progress_popup = self.root
+        record_note_progress_popup = tk.Toplevel()
         label = tk.Label(record_note_progress_popup, text=RECORD_IN_PROGRESS_WINDOW_NAME)
 
         progress_var = tk.DoubleVar()
@@ -73,7 +73,7 @@ class ApplicationController:
             progress_var.set(value)
             if value == 100:
                 record_note_progress_popup.destroy()
-            record_note_progress_popup.update()
+            self.root.update()
 
         return update_progress_var
 
@@ -89,7 +89,7 @@ class ApplicationController:
 
         
 
-        self.root.deiconify()
+        #self.root.deiconify()
 
         # tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
         # tk_first_frame.pack()

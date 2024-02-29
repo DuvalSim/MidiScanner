@@ -149,11 +149,15 @@ class NoteRecorder:
                 status_callback((nb_frame/max_nb_frame)*100)
 
             
-            k = cv2.waitKey(1)
+            #k = cv2.waitKey(1)
             # Wait for a key press to exit
-            if (k == ord('q')) or (nb_frame >= max_nb_frame):
+            # if (k == ord('q')) or (nb_frame >= max_nb_frame):
+            #     cv2.destroyAllWindows()
+            #     break
+            if (nb_frame >= max_nb_frame):
                 cv2.destroyAllWindows()
                 break
+
 
         # Release the video capture object and close all windows
 

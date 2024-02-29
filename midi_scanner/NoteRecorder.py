@@ -70,7 +70,7 @@ class NoteRecorder:
     def _end_recording(self):
 
         if len(self._notes_playing) > 0:
-            print("WARNING - a note is still playing")
+            self.logger.warning("While ending recording - A note was still being played")
 
             self._populate_next_frame([])
 
@@ -118,7 +118,7 @@ class NoteRecorder:
         fps = video_capture.get(cv2.CAP_PROP_FPS)
 
         ending_frame = min(ending_frame, total_nb_frames -1)
-
+        max_nb_frame = ending_frame - starting_frame
         nb_frame = 0
         while True:
             # Read the next frame from the video
@@ -144,14 +144,14 @@ class NoteRecorder:
             nb_frame += 1
 
             if nb_frame%100 == 0:
-                self.logger.debug(f"Doing [{nb_frame}]/[{ending_frame}]")
-                if status_callback is not None:
-                    status_callback((nb_frame/ending_frame)*100)
+                self.logger.debug(f"Doing [{nb_frame}]/[{max_nb_frame}]")
+            if status_callback is not None and nb_frame%10 == 0:
+                status_callback((nb_frame/max_nb_frame)*100)
 
             
             k = cv2.waitKey(1)
             # Wait for a key press to exit
-            if (k == ord('q')) or (nb_frame >= ending_frame):
+            if (k == ord('q')) or (nb_frame >= max_nb_frame):
                 cv2.destroyAllWindows()
                 break
 
@@ -165,8 +165,6 @@ class NoteRecorder:
         #note_recorder.round_frames()
 
 
-        note_nb_frames = [ played_note.nb_frame for played_note in  self._notes_played]
-
-        RYTHM_LENGTH = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3 , 4]        
+        
 
 

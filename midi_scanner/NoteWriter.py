@@ -4,7 +4,13 @@ from midi_scanner.PlayedNote import PlayedNote
 
 class ScoreWriter:
 
+    note_nb_frames = [ played_note.nb_frame for played_note in  self._notes_played]
+
+    RYTHM_LENGTH = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3 , 4]
+
     def __init__(self) -> None:
+
+        
         pass
 
     def create_part(self, played_note_list, played_rythms_list):

@@ -59,12 +59,13 @@ class ApplicationController:
     def run_record_note_progress(self) -> callable:
         #start progress bar
 
-        record_note_progress_popup = tk.Toplevel()
-        tk.Label(record_note_progress_popup, text=RECORD_IN_PROGRESS_WINDOW_NAME).grid(row=0,column=0)
+        record_note_progress_popup = self.root
+        label = tk.Label(record_note_progress_popup, text=RECORD_IN_PROGRESS_WINDOW_NAME)
 
         progress_var = tk.DoubleVar()
         progress_bar = Progressbar(record_note_progress_popup, variable=progress_var, maximum=100)
-        progress_bar.grid(row=1, column=0)#.pack(fill=tk.X, expand=1, side=tk.BOTTOM)
+        label.pack()
+        progress_bar.pack()
 
         progress_var.set(0)
 
@@ -72,12 +73,12 @@ class ApplicationController:
             progress_var.set(value)
             if value == 100:
                 record_note_progress_popup.destroy()
+            record_note_progress_popup.update()
 
         return update_progress_var
 
 
     def run(self):
-        
 
         self.root.withdraw()
         # https://stackoverflow.com/questions/41083597/trackbar-hsv-opencv-tkinter-python
@@ -85,24 +86,31 @@ class ApplicationController:
         music_video_filepath = askopenfilename(filetypes = (("videos", "*.mp4"), ("all files", "*.*"))) # show an "Open" dialog box and return the path to the selected file
 
         self.__open_video(music_video_filepath)
+
+        
+
         self.root.deiconify()
 
-        tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
-        tk_first_frame.pack()
-        clean_frame_idx = tk_first_frame.get_user_frame()
+        # tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
+        # tk_first_frame.pack()
+        # clean_frame_idx = tk_first_frame.get_user_frame()
+        clean_frame_idx = 164
+        last_frame_idx = 2500
+        logging.debug(f"Clean frame idx: [{clean_frame_idx}]")
 
-        tk_last_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_LAST_FRAME_LABEL, first_frame=clean_frame_idx)
-        tk_last_frame.pack()
-        last_frame_idx = tk_last_frame.get_user_frame()
+        # tk_last_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_LAST_FRAME_LABEL, first_frame=clean_frame_idx)
+        # tk_last_frame.pack()
+        # last_frame_idx = tk_last_frame.get_user_frame()
+        logging.debug(f"last frame idx: [{last_frame_idx}]")
 
-
-        self.root.withdraw()
-        self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
-
+        
+        #self.root.withdraw()
+        # self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
+        self.keyboard_roi = (0,246,635,350)
+        logging.debug(f"keyboard roi: [{self.keyboard_roi}]")
         status_callback = self.run_record_note_progress()
         NoteRecorder().record_notes(video_capture=self.video_capture, starting_frame=clean_frame_idx, ending_frame=last_frame_idx, keyboard_roi=self.keyboard_roi,first_white_key="C3", first_black_key="c3", status_callback=status_callback)
         
-        print(self.keyboard_roi)
 
 
 
@@ -147,10 +155,13 @@ def main():
     test_logger.debug("this is from other")
 
     app_controller = ApplicationController(root)
-
+        
+        
 
     # Show the initial window
     app_controller.run()
+
+
 
     root.mainloop()
 

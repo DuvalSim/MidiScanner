@@ -1,7 +1,9 @@
 import cv2
 from midi_scanner.utils import preprocessing as preproc
 import tkinter as tk
-from PIL import Image, ImageTk
+from PIL import ImageTk
+
+from midi_scanner.utils.gui_utils import cv2_to_pil
 
 import logging
 
@@ -38,8 +40,8 @@ class SelectFrameWindow(tk.Frame):
         button = tk.Button(self, text="Confirm", command=self.destroy)
         scale.pack(side="top", fill="x")
         button.pack(side="top", fill="x")
-
-        img_pil = Image.fromarray(current_frame)
+        
+        img_pil = cv2_to_pil(current_frame)
         img_tk = ImageTk.PhotoImage(image=img_pil)
         self.img_label = tk.Label(self, image= img_tk)
         self.img_label.image = img_tk
@@ -57,7 +59,8 @@ class SelectFrameWindow(tk.Frame):
         self.video_capture.set(cv2.CAP_PROP_POS_FRAMES,int(frame_idx))
         
         _, current_frame = self.video_capture.read()
-        img_pil = Image.fromarray(current_frame)
+        img_pil = cv2_to_pil(current_frame)
+        
         img_tk = ImageTk.PhotoImage(image=img_pil)
         self.img_label.configure(image=img_tk)
         self.img_label.image = img_tk

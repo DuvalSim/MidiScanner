@@ -115,9 +115,9 @@ class ApplicationController:
 
         self.root.deiconify()
 
-        # tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
-        # tk_first_frame.pack()
-        # clean_frame_idx = tk_first_frame.get_user_frame()
+        tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
+        tk_first_frame.pack()
+        clean_frame_idx = tk_first_frame.get_user_frame()
         clean_frame_idx = 164
         last_frame_idx = 2500
         logging.debug(f"Clean frame idx: [{clean_frame_idx}]")

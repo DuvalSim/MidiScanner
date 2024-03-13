@@ -13,9 +13,18 @@ from ctypes import windll
 from midi_scanner.GUI.CroppingWindow import CroppingWindow
 from midi_scanner.GUI.SelectFrameWindow import SelectFrameWindow
 
+from midi_scanner.GUI.MusicInfoWindow import MusicInfoWindow
+
 import cv2
 
 from midi_scanner.utils.ImageProcessor import ImageProcessor
+
+from midi_scanner.NoteWriter import MidiWriter
+
+import midi_scanner.utils.postprocessing as postprocessing
+
+import music21
+import subprocess
 
 windll.shcore.SetProcessDpiAwareness(1)
 
@@ -29,6 +38,8 @@ class ApplicationController:
         self.root = root
         self.current_window = None
         self.window_stack = []  # Stack to keep track of opened windows
+
+        self.logger = logging.getLogger("ApplicationController")
 
         self.music_video_filepath = ""
 
@@ -72,11 +83,18 @@ class ApplicationController:
         def update_progress_var(value):
             progress_var.set(value)
             if value == 100:
+                self.logger.info("End of note recording tracking")
                 record_note_progress_popup.destroy()
             self.root.update()
 
         return update_progress_var
 
+
+    def quit(self):
+        if self.video_capture:
+            self.video_capture.release()
+        self.root.destroy()
+        exit()
 
     def run(self):
 
@@ -84,12 +102,18 @@ class ApplicationController:
         # https://stackoverflow.com/questions/41083597/trackbar-hsv-opencv-tkinter-python
         
         music_video_filepath = askopenfilename(filetypes = (("videos", "*.mp4"), ("all files", "*.*"))) # show an "Open" dialog box and return the path to the selected file
-
+        
+        if not music_video_filepath:
+            
+            self.logger.critical("No file was selected")
+            self.quit()
+            
+            
         self.__open_video(music_video_filepath)
 
         
 
-        #self.root.deiconify()
+        self.root.deiconify()
 
         # tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
         # tk_first_frame.pack()
@@ -101,22 +125,73 @@ class ApplicationController:
         # tk_last_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_LAST_FRAME_LABEL, first_frame=clean_frame_idx)
         # tk_last_frame.pack()
         # last_frame_idx = tk_last_frame.get_user_frame()
-        logging.debug(f"last frame idx: [{last_frame_idx}]")
+        # logging.debug(f"last frame idx: [{last_frame_idx}]")
 
         
-        #self.root.withdraw()
+        # self.root.withdraw()
         # self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
         self.keyboard_roi = (0,246,635,350)
         logging.debug(f"keyboard roi: [{self.keyboard_roi}]")
         status_callback = self.run_record_note_progress()
-        NoteRecorder().record_notes(video_capture=self.video_capture, starting_frame=clean_frame_idx, ending_frame=last_frame_idx, keyboard_roi=self.keyboard_roi,first_white_key="C3", first_black_key="c3", status_callback=status_callback)
+        
+        note_recorder = NoteRecorder()
+        note_recorder.record_notes(video_capture=self.video_capture, starting_frame=clean_frame_idx, ending_frame=last_frame_idx, keyboard_roi=self.keyboard_roi,first_white_key="C3", first_black_key="c3", status_callback=status_callback)
+        
         
 
+        # note_recorder.get_notes_recorded()
+
+        # write notes to music sheet
+
+        cluster_centers, clustered_notes = postprocessing.get_clusters(note_recorder.get_notes_recorded())
+        fps = self.video_capture.get(cv2.CAP_PROP_FPS)
+        suggested_bpm = postprocessing.get_possible_bpm(fps, cluster_centers)
+
+        cluster_population_percentage = [ round((clustered_notes == cluster_idx).mean() *100) for cluster_idx in range(len(cluster_centers))]
+        
+        bpm_picker = MusicInfoWindow(self.root, suggested_bpm, cluster_population_percentage)
+        bpm_picker.pack()
+
+        bpm = bpm_picker.pick_number()
+
+        self.logger.info(f"BPM chosen: [{bpm}]")
+
+        # Create midi file
+
+        note_writer = MidiWriter(note_recorder.get_notes_recorded(), bpm, fps)
+        stream = note_writer.generate_stream()
+        stream.timeSignature = music21.meter.TimeSignature('4/4')
+        stream.show('lily.pdf')
+        stream.write('midi', fp='./output_files/go.mid')
+
+        # convert to xml with musescore
+        
+        subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/go.musicxml", "./output_files/go.mid"])
+
+        t = music21.converter.parse("./output_files/go.musicxml")
+        
+        newScore = music21.stream.Score()
 
 
+        for idx, part in enumerate(t.parts):
+            
+            flat_part = part.flatten()
+            # Only for the first part
+            if idx == 0:
+                current_bpm = flat_part.getElementsByClass(music21.tempo.MetronomeMark)[0]
+                new_bpm = music21.tempo.MetronomeMark(number=bpm)
+                new_bpm.placement = "above"
+                flat_part.replace(current_bpm, new_bpm)
 
-        self.video_capture.release()
-        self.root.destroy()
+            
+            flat_part.timeSignature = music21.meter.TimeSignature('4/4')
+            
+            flat_part.makeNotation(inPlace=True)
+            newScore.insert(0, flat_part)
+        
+        newScore.write('musicxml', fp='./output_files/final.xml')
+        
+        self.quit()
 
 
     
@@ -140,6 +215,7 @@ def main():
     #     help="path to yml state file",
     #     dest="state_file"
     # )
+    music21.environment.set("lilypondPath", "C:\\Program Files (x86)\\lilypond\\bin\\lilypond.exe")
 
     args = parser.parse_args()
     setup_image_logger(args.loglevel)
@@ -147,21 +223,12 @@ def main():
     root = tk.Tk()
     root.title("My Tkinter Application")
 
-    test_logger = logging.getLogger("test2")
-    test_mine = logging.getLogger("suuu")
 
-
-    test_mine.debug("this is from mine")
-    test_logger.debug("this is from other")
-
-    app_controller = ApplicationController(root)
-        
+    app_controller = ApplicationController(root)        
         
 
     # Show the initial window
     app_controller.run()
-
-
 
     root.mainloop()
 

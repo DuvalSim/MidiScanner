@@ -69,11 +69,13 @@ class NoteRecorder:
 
     def _end_recording(self):
 
+        self.clean_ending = True
+
         if len(self._notes_playing) > 0:
             self.logger.warning("While ending recording - A note was still being played")
 
             self._populate_next_frame([])
-
+            self.clean_ending = False
     
     def sort_played_notes(self):
         self._notes_played = sorted(self._notes_played, key=lambda x: x.start_frame)
@@ -145,7 +147,7 @@ class NoteRecorder:
 
             if nb_frame%100 == 0:
                 self.logger.debug(f"Doing [{nb_frame}]/[{max_nb_frame}]")
-            if status_callback is not None and nb_frame%10 == 0:
+            if status_callback is not None:
                 status_callback((nb_frame/max_nb_frame)*100)
 
             

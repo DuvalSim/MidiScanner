@@ -7,3 +7,7 @@ def get_frame_diff(frame_1, frame_2):
 
 	return cv2.absdiff(grayA, grayB)
 
+def record_notes(progress_callback):
+
+	
+	return 

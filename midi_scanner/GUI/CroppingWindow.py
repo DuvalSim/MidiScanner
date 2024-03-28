@@ -16,8 +16,6 @@ class CroppingWindow():
         video_capture.set(cv2.CAP_PROP_POS_FRAMES,frame_idx)
         _, self.clean_frame = video_capture.read()
 
-        # self.drawing_frame = self.clean_frame.copy()
-
         self.drawing = False
         self.top_left_pt, self.bottom_right_pt = (-1, -1), (-1, -1)
 

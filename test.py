@@ -1,42 +1,41 @@
+import cv2
 import tkinter as tk
+from PIL import Image, ImageTk
 
-class MyDialog(tk.Frame):
-    def __init__(self, parent):
-        tk.Frame.__init__(self, parent)
-        #self.toplevel = tk.Toplevel(parent)
-        self.var = tk.StringVar()
-        label = tk.Label(self, text="Pick something:")
-        om = tk.OptionMenu(self, self.var, "one", "two","three")
-        button = tk.Button(self, text="OK", command=self.destroy)
-        label.pack(side="top", fill="x")
-        om.pack(side="top", fill="x")
-        button.pack()
+class ImageDisplay:
+    def __init__(self, master, image_path):
+        self.master = master
+        self.cv2_image = cv2.imread(image_path)
+        self.tkinter_image = self.cv2_to_tkinter_image(self.cv2_image)
+        self.label = tk.Label(master)
+        self.label.config(image=self.tkinter_image)
+        self.label.image = self.tkinter_image
+        self.label.pack()
+        self.label.bind("<Button-1>", self.on_click)
 
-    def show(self):
-        #self.deiconify()
-        self.wait_window()
-        value = self.var.get()
-        return value
+    def cv2_to_tkinter_image(self, cv2_image):
+        """Convert a cv2 image to a tkinter image."""
+        cv2_image = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
+        pil_image = Image.fromarray(cv2_image)
+        tkinter_image = ImageTk.PhotoImage(image=pil_image)
+        return tkinter_image
 
+    def on_click(self, event):
+        """Handle mouse click event."""
+        x = event.x
+        y = event.y
+        pixel_value = self.cv2_image[y, x]
+        print("Pixel value at ({}, {}): {}".format(x, y, pixel_value))
 
-class Example(tk.Frame):
-    def __init__(self, parent):
-        tk.Frame.__init__(self, parent)
-
-        self.button = tk.Button(self, text="Click me!", command=self.on_click)
-        self.label = tk.Label(self, width=80)
-        self.label.pack(side="top", fill="x")
-        self.button.pack(pady=20)
-
-    def on_click(self):
-        window = MyDialog(self)
-        window.pack()
-        result = window.show()
-        self.label.configure(text="your result: %s" % result)
-
-if __name__ == "__main__":
+def display_image(image_path):
+    """Display an image in a tkinter window."""
     root = tk.Tk()
-    Example(root).pack(fill="both", expand=True)
+    root.title("Image Display")
+    image_display = ImageDisplay(root, image_path)
     root.mainloop()
 
-    #https://stackoverflow.com/questions/29497391/creating-a-tkinter-class-and-waiting-for-a-return-value
+# Path to your image file
+image_path = "C:\\Users\\simon\\Documents\\Projets\\MidiScanner\\media\\test_frame.png"
+
+# Display the image
+display_image(image_path)

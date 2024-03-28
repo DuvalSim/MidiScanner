@@ -7,7 +7,6 @@ from midi_scanner.utils.gui_utils import cv2_to_pil
 
 import logging
 
-# TODO: Change color of image
 
 class SelectFrameWindow(tk.Frame):    
 

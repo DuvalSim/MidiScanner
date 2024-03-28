@@ -12,6 +12,7 @@ from tkinter.filedialog import askopenfilename
 from ctypes import windll
 from midi_scanner.GUI.CroppingWindow import CroppingWindow
 from midi_scanner.GUI.SelectFrameWindow import SelectFrameWindow
+from midi_scanner.GUI.SelectVideoInfoWindow import VideoInfoWindow
 
 from midi_scanner.GUI.MusicInfoWindow import MusicInfoWindow
 
@@ -111,87 +112,92 @@ class ApplicationController:
             
         self.__open_video(music_video_filepath)
 
-        
-
         self.root.deiconify()
-
-        tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
-        tk_first_frame.pack()
-        clean_frame_idx = tk_first_frame.get_user_frame()
-        clean_frame_idx = 164
-        last_frame_idx = 2500
-        logging.debug(f"Clean frame idx: [{clean_frame_idx}]")
-
-        # tk_last_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_LAST_FRAME_LABEL, first_frame=clean_frame_idx)
-        # tk_last_frame.pack()
-        # last_frame_idx = tk_last_frame.get_user_frame()
-        # logging.debug(f"last frame idx: [{last_frame_idx}]")
-
-        
-        # self.root.withdraw()
-        # self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
-        self.keyboard_roi = (0,246,635,350)
-        logging.debug(f"keyboard roi: [{self.keyboard_roi}]")
-        status_callback = self.run_record_note_progress()
-        
-        note_recorder = NoteRecorder()
-        note_recorder.record_notes(video_capture=self.video_capture, starting_frame=clean_frame_idx, ending_frame=last_frame_idx, keyboard_roi=self.keyboard_roi,first_white_key="C3", first_black_key="c3", status_callback=status_callback)
-        
+        t = VideoInfoWindow(self.root, self.video_capture)
+        t.pack()
         
 
-        # note_recorder.get_notes_recorded()
-
-        # write notes to music sheet
-
-        cluster_centers, clustered_notes = postprocessing.get_clusters(note_recorder.get_notes_recorded())
-        fps = self.video_capture.get(cv2.CAP_PROP_FPS)
-        suggested_bpm = postprocessing.get_possible_bpm(fps, cluster_centers)
-
-        cluster_population_percentage = [ round((clustered_notes == cluster_idx).mean() *100) for cluster_idx in range(len(cluster_centers))]
         
-        bpm_picker = MusicInfoWindow(self.root, suggested_bpm, cluster_population_percentage)
-        bpm_picker.pack()
 
-        bpm = bpm_picker.pick_number()
+        # self.root.deiconify()
 
-        self.logger.info(f"BPM chosen: [{bpm}]")
+        # tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
+        # tk_first_frame.pack()
+        # clean_frame_idx = tk_first_frame.get_user_frame()
+        # clean_frame_idx = 164
+        # last_frame_idx = 2500
+        # logging.debug(f"Clean frame idx: [{clean_frame_idx}]")
 
-        # Create midi file
+        # # tk_last_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_LAST_FRAME_LABEL, first_frame=clean_frame_idx)
+        # # tk_last_frame.pack()
+        # # last_frame_idx = tk_last_frame.get_user_frame()
+        # # logging.debug(f"last frame idx: [{last_frame_idx}]")
 
-        note_writer = MidiWriter(note_recorder.get_notes_recorded(), bpm, fps)
-        stream = note_writer.generate_stream()
-        stream.timeSignature = music21.meter.TimeSignature('4/4')
-        stream.show('lily.pdf')
-        stream.write('midi', fp='./output_files/go.mid')
-
-        # convert to xml with musescore
         
-        subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/go.musicxml", "./output_files/go.mid"])
-
-        t = music21.converter.parse("./output_files/go.musicxml")
+        # # self.root.withdraw()
+        # # self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
+        # self.keyboard_roi = (0,246,635,350)
+        # logging.debug(f"keyboard roi: [{self.keyboard_roi}]")
+        # status_callback = self.run_record_note_progress()
         
-        newScore = music21.stream.Score()
+        # note_recorder = NoteRecorder()
+        # note_recorder.record_notes(video_capture=self.video_capture, starting_frame=clean_frame_idx, ending_frame=last_frame_idx, keyboard_roi=self.keyboard_roi,first_white_key="C3", first_black_key="c3", status_callback=status_callback)
+        
+        
+
+        # # note_recorder.get_notes_recorded()
+
+        # # write notes to music sheet
+
+        # cluster_centers, clustered_notes = postprocessing.get_clusters(note_recorder.get_notes_recorded())
+        # fps = self.video_capture.get(cv2.CAP_PROP_FPS)
+        # suggested_bpm = postprocessing.get_possible_bpm(fps, cluster_centers)
+
+        # cluster_population_percentage = [ round((clustered_notes == cluster_idx).mean() *100) for cluster_idx in range(len(cluster_centers))]
+        
+        # bpm_picker = MusicInfoWindow(self.root, suggested_bpm, cluster_population_percentage)
+        # bpm_picker.pack()
+
+        # bpm = bpm_picker.pick_number()
+
+        # self.logger.info(f"BPM chosen: [{bpm}]")
+
+        # # Create midi file
+
+        # note_writer = MidiWriter(note_recorder.get_notes_recorded(), bpm, fps)
+        # stream = note_writer.generate_stream()
+        # stream.timeSignature = music21.meter.TimeSignature('4/4')
+        # stream.show('lily.pdf')
+        # stream.write('midi', fp='./output_files/go.mid')
+
+        # # convert to xml with musescore
+        
+        # subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/go.musicxml", "./output_files/go.mid"])
+
+        # t = music21.converter.parse("./output_files/go.musicxml")
+        
+        # newScore = music21.stream.Score()
 
 
-        for idx, part in enumerate(t.parts):
+        # for idx, part in enumerate(t.parts):
             
-            flat_part = part.flatten()
-            # Only for the first part
-            if idx == 0:
-                current_bpm = flat_part.getElementsByClass(music21.tempo.MetronomeMark)[0]
-                new_bpm = music21.tempo.MetronomeMark(number=bpm)
-                new_bpm.placement = "above"
-                flat_part.replace(current_bpm, new_bpm)
+        #     flat_part = part.flatten()
+        #     # Only for the first part
+        #     if idx == 0:
+        #         current_bpm = flat_part.getElementsByClass(music21.tempo.MetronomeMark)[0]
+        #         new_bpm = music21.tempo.MetronomeMark(number=bpm)
+        #         new_bpm.placement = "above"
+        #         flat_part.replace(current_bpm, new_bpm)
 
             
-            flat_part.timeSignature = music21.meter.TimeSignature('4/4')
+        #     flat_part.timeSignature = music21.meter.TimeSignature('4/4')
             
-            flat_part.makeNotation(inPlace=True)
-            newScore.insert(0, flat_part)
+        #     flat_part.makeNotation(inPlace=True)
+        #     newScore.insert(0, flat_part)
         
-        newScore.write('musicxml', fp='./output_files/final.xml')
+        # newScore.write('musicxml', fp='./output_files/final.xml')
         
-        self.quit()
+        # self.quit()
 
 
     

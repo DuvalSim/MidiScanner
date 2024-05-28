@@ -113,9 +113,12 @@ class ApplicationController:
         self.__open_video(music_video_filepath)
 
         self.root.deiconify()
+        # self.root.withdraw()
         t = VideoInfoWindow(self.root, self.video_capture)
         t.pack()
+        test = t.pick_music_info()
         
+        logging.debug(f"Got colors: {test}")
 
         
 

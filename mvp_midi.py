@@ -22,7 +22,9 @@ from midi_scanner.utils.ImageProcessor import ImageProcessor
 
 from midi_scanner.NoteWriter import MidiWriter
 
+from midi_scanner.utils.ColorMidiScanner import MidiScannerColor, ColorFormat
 import midi_scanner.utils.postprocessing as postprocessing
+from midi_scanner.utils import visualization
 
 import music21
 import subprocess
@@ -43,6 +45,7 @@ class ApplicationController:
         self.logger = logging.getLogger("ApplicationController")
 
         self.music_video_filepath = ""
+        self.video_capture = None
 
     def show_window(self, window_class):
         if self.current_window:
@@ -112,43 +115,52 @@ class ApplicationController:
             
         self.__open_video(music_video_filepath)
 
-        self.root.deiconify()
-        # self.root.withdraw()
-        t = VideoInfoWindow(self.root, self.video_capture)
-        t.pack()
-        test = t.pick_music_info()
-        
-        logging.debug(f"Got colors: {test}")
-
-        
-
         # self.root.deiconify()
+        # self.root.withdraw()
+        # t = VideoInfoWindow(self.root, self.video_capture)
+        # t.pack()
+        # test = t.pick_music_info()
+        
+        # logging.debug(f"Got colors: {test}")
+
+        
+
+        self.root.deiconify()
 
         # tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
         # tk_first_frame.pack()
         # clean_frame_idx = tk_first_frame.get_user_frame()
-        # clean_frame_idx = 164
-        # last_frame_idx = 2500
-        # logging.debug(f"Clean frame idx: [{clean_frame_idx}]")
+        clean_frame_idx = 164
+        last_frame_idx = 2500
+        logging.debug(f"Clean frame idx: [{clean_frame_idx}]")
 
-        # # tk_last_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_LAST_FRAME_LABEL, first_frame=clean_frame_idx)
-        # # tk_last_frame.pack()
-        # # last_frame_idx = tk_last_frame.get_user_frame()
-        # # logging.debug(f"last frame idx: [{last_frame_idx}]")
+        # tk_last_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_LAST_FRAME_LABEL, first_frame=clean_frame_idx)
+        # tk_last_frame.pack()
+        # last_frame_idx = tk_last_frame.get_user_frame()
+        # logging.debug(f"last frame idx: [{last_frame_idx}]")
 
         
-        # # self.root.withdraw()
-        # # self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
-        # self.keyboard_roi = (0,246,635,350)
-        # logging.debug(f"keyboard roi: [{self.keyboard_roi}]")
-        # status_callback = self.run_record_note_progress()
+        # self.root.withdraw()
+        # self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
+        self.keyboard_roi = (0,246,635,350)
+        logging.debug(f"keyboard roi: [{self.keyboard_roi}]")
+        status_callback = self.run_record_note_progress()
         
-        # note_recorder = NoteRecorder()
-        # note_recorder.record_notes(video_capture=self.video_capture, starting_frame=clean_frame_idx, ending_frame=last_frame_idx, keyboard_roi=self.keyboard_roi,first_white_key="C3", first_black_key="c3", status_callback=status_callback)
+        note_recorder = NoteRecorder()
+        note_recorder.record_notes(video_capture=self.video_capture, starting_frame=clean_frame_idx, ending_frame=last_frame_idx, keyboard_roi=self.keyboard_roi,first_white_key="C3", first_black_key="c3", status_callback=status_callback)
         
         
 
-        # # note_recorder.get_notes_recorded()
+        self.logger.info("Got notes, ending")
+        
+        note_played = note_recorder.get_notes_recorded()
+        colors = postprocessing.get_possible_colors(note_played)
+
+        for i, color in enumerate(colors):
+            visualization.display_color(color, f"Color nb {i}")
+
+        cv2.waitKey(0)
+            
 
         # # write notes to music sheet
 

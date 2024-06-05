@@ -2,6 +2,7 @@ import cv2
 from midi_scanner import Key
 import numpy as np
 import colorsys
+from midi_scanner.utils.ColorMidiScanner import MidiScannerColor
 
 import logging
 
@@ -73,3 +74,7 @@ def display_pressed_keys(base_img, keys, level=logging.DEBUG):
 		result_img = cv2.rectangle(result_img, (key.start_x, base_img.shape[0] - 10),( key.end_x, base_img.shape[0]) ,color, 3)
 
 	logging.getLogger("Visualization").log_image_factory(result_img, "pressed keys", level)
+
+def display_color(color: MidiScannerColor, title : str = "Color", level:int = logging.DEBUG):
+	image = np.full((100, 100, 3), color.get_bgr()).astype(np.uint8)
+	logging.getLogger("Visualization").log_image_factory(image, title, level)

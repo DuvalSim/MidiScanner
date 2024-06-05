@@ -1,7 +1,7 @@
 from typing import List
 from midi_scanner.Keyboard import Keyboard
 from midi_scanner.PlayedNote import PlayedNote
-from midi_scanner.Key import Key
+from midi_scanner.Key import Key, PressedKey
 
 from matplotlib import pyplot as plt
 
@@ -27,7 +27,7 @@ class NoteRecorder:
 
     
 
-    def _populate_next_frame(self, pressed_keys:List[Key]):
+    def _populate_next_frame(self, pressed_keys:List[PressedKey]):
         
         self._current_frame += 1
 
@@ -64,7 +64,7 @@ class NoteRecorder:
         # iterate through the remaining pressed keys
         # Add them to the notes being played   
         for pressed_key in pressed_keys:
-            self._notes_playing.append(PlayedNote(pressed_key.note, first_frame=self._current_frame))
+            self._notes_playing.append(PlayedNote(pressed_key.note, first_frame=self._current_frame, color=pressed_key.average_color))
         
 
     def _end_recording(self):
@@ -72,10 +72,10 @@ class NoteRecorder:
         self.clean_ending = True
 
         if len(self._notes_playing) > 0:
-            self.logger.warning("While ending recording - A note was still being played")
-
+            self.logger.warning(f"While ending recording - At least one note was still being played: {self._notes_playing} ")
             self._populate_next_frame([])
             self.clean_ending = False
+            
     
     def sort_played_notes(self):
         self._notes_played = sorted(self._notes_played, key=lambda x: x.start_frame)

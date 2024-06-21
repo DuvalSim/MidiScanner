@@ -15,6 +15,9 @@ from midi_scanner.utils.visualization import display_pressed_keys
 
 from typing import Callable
 
+
+# Class that handles analysis of the video
+# Takes a video capture and keyboard ROI.
 class NoteRecorder:
     
     def __init__(self) -> None:

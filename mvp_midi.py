@@ -13,6 +13,7 @@ from ctypes import windll
 from midi_scanner.GUI.CroppingWindow import CroppingWindow
 from midi_scanner.GUI.SelectFrameWindow import SelectFrameWindow
 from midi_scanner.GUI.SelectVideoInfoWindow import VideoInfoWindow
+from midi_scanner.GUI.KeyboardRoiWindow import KeyboardRoiWindow
 
 from midi_scanner.GUI.MusicInfoWindow import MusicInfoWindow
 
@@ -127,9 +128,9 @@ class ApplicationController:
 
         self.root.deiconify()
 
-        tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
-        tk_first_frame.pack()
-        clean_frame_idx = tk_first_frame.get_user_frame()
+        # tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
+        # tk_first_frame.pack()
+        # clean_frame_idx = tk_first_frame.get_user_frame()
         clean_frame_idx = 164
         last_frame_idx = 2500
         logging.debug(f"Clean frame idx: [{clean_frame_idx}]")
@@ -140,10 +141,20 @@ class ApplicationController:
         # logging.debug(f"last frame idx: [{last_frame_idx}]")
 
         
-        self.root.withdraw()
-        self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
-        # self.keyboard_roi = (0,246,635,350)
+        # self.root.withdraw()
+        # self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
+        self.keyboard_roi = (0,246,635,350)
         logging.debug(f"keyboard roi: [{self.keyboard_roi}]")
+        self.image_processor = ImageProcessor(keyboard_roi=self.keyboard_roi)
+
+        # Updates image_processor
+        keyboard_roi_window = KeyboardRoiWindow(self.root, self.video_capture, self.image_processor, clean_frame_idx)
+        keyboard_roi_window.pack()
+
+        print(self.image_processor)
+
+        cv2.waitKey(0)
+        
         status_callback = self.run_record_note_progress()
         
         note_recorder = NoteRecorder()

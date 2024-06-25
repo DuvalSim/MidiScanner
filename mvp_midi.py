@@ -14,6 +14,7 @@ from midi_scanner.GUI.CroppingWindow import CroppingWindow
 from midi_scanner.GUI.SelectFrameWindow import SelectFrameWindow
 from midi_scanner.GUI.SelectVideoInfoWindow import VideoInfoWindow
 from midi_scanner.GUI.KeyboardRoiWindow import KeyboardRoiWindow
+from midi_scanner.GUI.KeyboardBlackWhiteLimitWindow import KeyboardBlacWhiteLimitWindow
 
 from midi_scanner.GUI.MusicInfoWindow import MusicInfoWindow
 
@@ -26,6 +27,8 @@ from midi_scanner.NoteWriter import MidiWriter
 from midi_scanner.utils.ColorMidiScanner import MidiScannerColor, ColorFormat
 import midi_scanner.utils.postprocessing as postprocessing
 from midi_scanner.utils import visualization
+
+import midi_scanner.utils.gui_utils as gui_utils
 
 import music21
 import subprocess
@@ -135,6 +138,8 @@ class ApplicationController:
         last_frame_idx = 2500
         logging.debug(f"Clean frame idx: [{clean_frame_idx}]")
 
+        clean_frame = gui_utils.get_frame(self.video_capture, clean_frame_idx)
+
         # tk_last_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_LAST_FRAME_LABEL, first_frame=clean_frame_idx)
         # tk_last_frame.pack()
         # last_frame_idx = tk_last_frame.get_user_frame()
@@ -145,11 +150,25 @@ class ApplicationController:
         # self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
         self.keyboard_roi = (0,246,635,350)
         logging.debug(f"keyboard roi: [{self.keyboard_roi}]")
-        self.image_processor = ImageProcessor(keyboard_roi=self.keyboard_roi)
+        self.image_processor = ImageProcessor()
+        self.image_processor.set_keyboard_roi_from_image(clean_frame)
 
         # Updates image_processor
-        keyboard_roi_window = KeyboardRoiWindow(self.root, self.video_capture, self.image_processor, clean_frame_idx)
+        keyboard_roi_window = KeyboardRoiWindow(self.root, clean_frame, self.image_processor)
+    
         keyboard_roi_window.pack()
+        keyboard_roi_window.wait_window()
+
+        print("roi:", self.image_processor.get_keyboard_roi())
+
+        self.image_processor.set_black_white_limit_from_image(clean_frame)
+        print(self.image_processor.get_black_white_limit())
+        black_window = KeyboardBlacWhiteLimitWindow(self.root, clean_frame, self.image_processor)
+        black_window.pack()
+        black_window.wait_window()
+        print(self.image_processor.get_black_white_limit())
+        exit(0)
+
 
         print(self.image_processor)
 

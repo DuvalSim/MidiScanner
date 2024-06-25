@@ -25,17 +25,42 @@ def generate_color_array(n):
 
     return color_array
 
-def display_lines(win_name, img, lines):
+def display_lines(win_name, img, lines, level=logging.DEBUG):
 	new_img = img.copy()
 	for line in lines:
 		rho = int(line[0][0])
 		theta = line[0][1]
 		if theta != 0:
-			print("ATTENTION LES CHAINES")
+			theta = float(line[0][1])
+
+			a = np.cos(theta)
+			b = np.sin(theta)
+		
+			# x0 stores the value rcos(theta)
+			x0 = a*rho
+		
+			# y0 stores the value rsin(theta)
+			y0 = b*rho
+		
+			# x1 stores the rounded off value of (rcos(theta)-1000sin(theta))
+			x1 = int(x0 + 1000*(-b))
+		
+			# y1 stores the rounded off value of (rsin(theta)+1000cos(theta))
+			y1 = int(y0 + 1000*(a))
+		
+			# x2 stores the rounded off value of (rcos(theta)+1000sin(theta))
+			x2 = int(x0 - 1000*(-b))
+		
+			# y2 stores the rounded off value of (rsin(theta)-1000cos(theta))
+			y2 = int(y0 - 1000*(a))
+
+			if round(theta,3) == round(np.pi/2, 3):
+				color = (0,255,0)
+				new_img = cv2.line(new_img, (x1, y1), (x2, y2), color, 2)
 		else:
 			new_img = cv2.line(new_img, (rho, 0), (rho, img.shape[0]), 255, 3)
 
-	cv2.imshow(win_name, new_img)
+	logging.getLogger("Visualization").log_image_factory(new_img, win_name, level)
 
 
 def display_connected_components(num_labels, labeled_image, stats, centroids, black_note_string):

@@ -143,13 +143,9 @@ class ApplicationController:
         # tk_last_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_LAST_FRAME_LABEL, first_frame=clean_frame_idx)
         # tk_last_frame.pack()
         # last_frame_idx = tk_last_frame.get_user_frame()
-        # logging.debug(f"last frame idx: [{last_frame_idx}]")
+        logging.debug(f"last frame idx: [{last_frame_idx}]")
 
         
-        # self.root.withdraw()
-        # self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
-        self.keyboard_roi = (0,246,635,350)
-        logging.debug(f"keyboard roi: [{self.keyboard_roi}]")
         self.image_processor = ImageProcessor()
         self.image_processor.set_keyboard_roi_from_image(clean_frame)
 
@@ -162,58 +158,62 @@ class ApplicationController:
         print("roi:", self.image_processor.get_keyboard_roi())
 
         self.image_processor.set_black_white_limit_from_image(clean_frame)
-        print(self.image_processor.get_black_white_limit())
+
         black_window = KeyboardBlacWhiteLimitWindow(self.root, clean_frame, self.image_processor)
         black_window.pack()
         black_window.wait_window()
-        print(self.image_processor.get_black_white_limit())
-        exit(0)
 
 
-        print(self.image_processor)
-
-        cv2.waitKey(0)
+        self.logger.debug(self.image_processor)
         
         status_callback = self.run_record_note_progress()
         
         note_recorder = NoteRecorder()
-        note_recorder.record_notes(video_capture=self.video_capture, starting_frame=clean_frame_idx, ending_frame=last_frame_idx, keyboard_roi=self.keyboard_roi,first_white_key="C3", first_black_key="c3", status_callback=status_callback)
+        
+        note_recorder.record_notes(video_capture=self.video_capture,
+                                    image_processor=self.image_processor,
+                                    starting_frame=clean_frame_idx, ending_frame=last_frame_idx,
+                                      first_white_key="C3", first_black_key="c3",
+                                      status_callback=status_callback)
         
         
 
         self.logger.info("Got notes, ending")
-        
+
+
         note_played = note_recorder.get_notes_recorded()
-        colors = postprocessing.get_possible_colors(note_played)
+        colors, color_clusters_idx = postprocessing.get_color_clusters(note_played)
 
         for i, color in enumerate(colors):
             visualization.display_color(color, f"Color nb {i}")
 
+        # self.logger.debug(f"Color clusters {color_clusters_idx}")
         cv2.waitKey(0)
             
 
-        # # write notes to music sheet
+        # write notes to music sheet
 
-        # cluster_centers, clustered_notes = postprocessing.get_clusters(note_recorder.get_notes_recorded())
-        # fps = self.video_capture.get(cv2.CAP_PROP_FPS)
-        # suggested_bpm = postprocessing.get_possible_bpm(fps, cluster_centers)
+        cluster_centers, clustered_notes = postprocessing.get_clusters(note_played)
+        fps = self.video_capture.get(cv2.CAP_PROP_FPS)
+        suggested_bpm = postprocessing.get_possible_bpm(fps, cluster_centers)
 
-        # cluster_population_percentage = [ round((clustered_notes == cluster_idx).mean() *100) for cluster_idx in range(len(cluster_centers))]
+        cluster_population_percentage = [ round((clustered_notes == cluster_idx).mean() *100) for cluster_idx in range(len(cluster_centers))]
         
-        # bpm_picker = MusicInfoWindow(self.root, suggested_bpm, cluster_population_percentage)
-        # bpm_picker.pack()
+        bpm_picker = MusicInfoWindow(self.root, suggested_bpm, cluster_population_percentage)
+        bpm_picker.pack()
 
-        # bpm = bpm_picker.pick_number()
+        bpm = bpm_picker.pick_number()
 
-        # self.logger.info(f"BPM chosen: [{bpm}]")
+        self.logger.info(f"BPM chosen: [{bpm}]")
 
-        # # Create midi file
+        # Create midi file
 
-        # note_writer = MidiWriter(note_recorder.get_notes_recorded(), bpm, fps)
-        # stream = note_writer.generate_stream()
-        # stream.timeSignature = music21.meter.TimeSignature('4/4')
-        # stream.show('lily.pdf')
-        # stream.write('midi', fp='./output_files/go.mid')
+        note_writer = MidiWriter(note_played,color_clusters_idx, bpm, fps)
+        score = note_writer.generate_score()
+        
+        score.timeSignature = music21.meter.TimeSignature('4/4')
+        score.show('lily.pdf')
+        score.write('midi', fp='./output_files/go.mid')
 
         # # convert to xml with musescore
         
@@ -242,7 +242,7 @@ class ApplicationController:
         
         # newScore.write('musicxml', fp='./output_files/final.xml')
         
-        # self.quit()
+        self.quit()
 
 
     
@@ -266,8 +266,8 @@ def main():
     #     help="path to yml state file",
     #     dest="state_file"
     # )
-    music21.environment.set("lilypondPath", "C:\\Program Files (x86)\\lilypond\\bin\\lilypond.exe")
-
+    #music21.environment.set("lilypondPath", "C:\\Program Files (x86)\\lilypond\\bin\\lilypond.exe")
+    music21.environment.set("lilypondPath", "C:\\Users\\duva7214\\Documents\\Private\\Programs\\lilypond-2.24.3\\bin\\lilypond.exe")
     args = parser.parse_args()
     setup_image_logger(args.loglevel)
     

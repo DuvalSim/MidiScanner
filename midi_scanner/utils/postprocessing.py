@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from music21 import stream, meter, key, metadata, converter, clef
 import music21 as music21
 from midi_scanner.PlayedNote import PlayedNote
@@ -85,7 +85,7 @@ def get_possible_bpm(fps, centroids):
 
     return possible_bpms
 
-def get_possible_colors(note_list : List[PlayedNote]):
+def get_color_clusters(note_list : List[PlayedNote]) -> Tuple[List[MidiScannerColor],List[int]] :
 
     white_keys_colors = []
     black_keys_colors = []
@@ -151,4 +151,4 @@ def get_possible_colors(note_list : List[PlayedNote]):
 
     colors = [MidiScannerColor(cluster_center, ColorFormat.BGR) for cluster_center in cluster_centers]
 
-    return colors
+    return colors, note_clusters

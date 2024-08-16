@@ -15,17 +15,39 @@ class MidiWriter:
 
     RYTHM_LENGTH = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3 , 4]
 
-    def __init__(self, note_list: List[PlayedNote], bpm: int, frame_per_seconds: int) -> None:
+    def __init__(self, note_list: List[PlayedNote], note_assigned_cluster: List[int], bpm: int, frame_per_seconds: int) -> None:
         self.logger = logging.getLogger("MidiWriter")
-        self.notes_to_write = note_list
-        self.notes_nb_frames = [note.nb_frame for note in note_list]
+        
+        unique_clusters = sorted(set(note_assigned_cluster))
+        self.notes_to_write = [[]]*len(unique_clusters)
+
+        for note_idx, note in enumerate(note_list):
+            cluster_idx = note_assigned_cluster[note_idx]
+            self.notes_to_write[cluster_idx].append(note)
+
+        # self.notes_to_write = note_list        
 
         self.bpm = bpm
         self.beat_per_frame =  bpm / (frame_per_seconds*60)
 
-    def generate_stream(self):
+    def generate_score(self):
+        score = stream.Score()
+        streams = self.generate_streams()
+        for stream in streams:
+            score.insert(0, stream)
 
-        start_offset = self.notes_to_write[0].start_frame
+        return score
+    
+    def generate_streams(self):
+        streams = []
+        for note_list in self.notes_to_write:
+            streams.append(self.__generate_stream(self, note_list))
+
+        return streams
+    
+    def __generate_stream(self, notes_to_write):
+
+        start_offset = notes_to_write[0].start_frame
         
         stream = music21.stream.Stream()
 

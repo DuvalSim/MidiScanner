@@ -182,18 +182,40 @@ class ApplicationController:
 
 
         note_played = note_recorder.get_notes_recorded()
-        colors, color_clusters_idx = postprocessing.get_color_clusters(note_played)
+        w_colors, b_colors, w_color_clusters_idx, b_color_clusters_idx = postprocessing.get_color_clusters(note_played)
+        
+        print(w_colors)
 
-        for i, color in enumerate(colors):
-            visualization.display_color(color, f"Color nb {i}")
+        for i, color in enumerate(w_colors):
+            visualization.display_color(color, f"WhiteColor nb {i}")
 
+        if b_colors is not None:
+            for i, color in enumerate(b_colors):
+                visualization.display_color(color, f"Black Color nb {i}")
         # self.logger.debug(f"Color clusters {color_clusters_idx}")
         cv2.waitKey(0)
             
+        # Get USER INPUT ON COLOR
+
+        b_notes = 0
+        w_notes = 0
+        for note in note_played:
+            if note.is_black():
+                b_notes += 1
+            else:
+                w_notes += 1
+        
+
+        b_color_clusters_idx = [0] * (len(note_played) - len(w_color_clusters_idx))
+
+        note_stream_ids = [b_color_clusters_idx.pop(0) if note.is_black() else w_color_clusters_idx.pop(0) \
+                           for note_idx, note in enumerate(note_played)]
+
 
         # write notes to music sheet
 
         cluster_centers, clustered_notes = postprocessing.get_clusters(note_played)
+        self.logger.debug(f"Nb Notes:{len(note_played)} - {len(clustered_notes)}")
         fps = self.video_capture.get(cv2.CAP_PROP_FPS)
         suggested_bpm = postprocessing.get_possible_bpm(fps, cluster_centers)
 
@@ -208,39 +230,39 @@ class ApplicationController:
 
         # Create midi file
 
-        note_writer = MidiWriter(note_played,color_clusters_idx, bpm, fps)
+        note_writer = MidiWriter(note_played, note_stream_ids, bpm, fps)
         score = note_writer.generate_score()
-        
+        # score = note_writer.generate_stream(note_played, note_played[0].start_frame)
         score.timeSignature = music21.meter.TimeSignature('4/4')
-        score.show('lily.pdf')
+        # score.show('lily.pdf')
         score.write('midi', fp='./output_files/go.mid')
 
         # # convert to xml with musescore
         
-        # subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/go.musicxml", "./output_files/go.mid"])
+        subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/go.musicxml", "./output_files/go.mid"])
 
-        # t = music21.converter.parse("./output_files/go.musicxml")
+        #t = music21.converter.parse("./output_files/go.musicxml")
+        t = score
+        newScore = music21.stream.Score()
+
+
+        for idx, part in enumerate(t.parts):
+            
+            flat_part = part.flatten()
+            # Only for the first part
+            if idx == 0:
+                current_bpm = flat_part.getElementsByClass(music21.tempo.MetronomeMark)[0]
+                new_bpm = music21.tempo.MetronomeMark(number=bpm)
+                new_bpm.placement = "above"
+                flat_part.replace(current_bpm, new_bpm)
+
+            
+            flat_part.timeSignature = music21.meter.TimeSignature('4/4')
+            
+            flat_part.makeNotation(inPlace=True)
+            newScore.insert(0, flat_part)
         
-        # newScore = music21.stream.Score()
-
-
-        # for idx, part in enumerate(t.parts):
-            
-        #     flat_part = part.flatten()
-        #     # Only for the first part
-        #     if idx == 0:
-        #         current_bpm = flat_part.getElementsByClass(music21.tempo.MetronomeMark)[0]
-        #         new_bpm = music21.tempo.MetronomeMark(number=bpm)
-        #         new_bpm.placement = "above"
-        #         flat_part.replace(current_bpm, new_bpm)
-
-            
-        #     flat_part.timeSignature = music21.meter.TimeSignature('4/4')
-            
-        #     flat_part.makeNotation(inPlace=True)
-        #     newScore.insert(0, flat_part)
-        
-        # newScore.write('musicxml', fp='./output_files/final.xml')
+        newScore.write('musicxml', fp='./output_files/final.xml')
         
         self.quit()
 
@@ -267,7 +289,7 @@ def main():
     #     dest="state_file"
     # )
     #music21.environment.set("lilypondPath", "C:\\Program Files (x86)\\lilypond\\bin\\lilypond.exe")
-    music21.environment.set("lilypondPath", "C:\\Users\\duva7214\\Documents\\Private\\Programs\\lilypond-2.24.3\\bin\\lilypond.exe")
+    # music21.environment.set("lilypondPath", "C:\\Users\\duva7214\\Documents\\Private\\Programs\\lilypond-2.24.3\\bin\\lilypond.exe")
     args = parser.parse_args()
     setup_image_logger(args.loglevel)
     

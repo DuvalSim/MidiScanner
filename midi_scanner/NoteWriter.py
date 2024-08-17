@@ -1,5 +1,4 @@
 from typing import List
-from music21 import stream, meter, key, metadata, converter, clef
 import music21 as music21
 from midi_scanner.PlayedNote import PlayedNote
 
@@ -19,19 +18,20 @@ class MidiWriter:
         self.logger = logging.getLogger("MidiWriter")
         
         unique_clusters = sorted(set(note_assigned_cluster))
-        self.notes_to_write = [[]]*len(unique_clusters)
-
+        self.notes_to_write = [[] for _ in range(len(unique_clusters))]
+        self.logger.debug(f"Nb Notes:{len(note_list)} - {len(note_assigned_cluster)}")
         for note_idx, note in enumerate(note_list):
+            
             cluster_idx = note_assigned_cluster[note_idx]
             self.notes_to_write[cluster_idx].append(note)
 
         # self.notes_to_write = note_list        
-
+        self.logger.debug(f"notes to write: {self.notes_to_write}")
         self.bpm = bpm
         self.beat_per_frame =  bpm / (frame_per_seconds*60)
 
     def generate_score(self):
-        score = stream.Score()
+        score = music21.stream.Score()
         streams = self.generate_streams()
         for stream in streams:
             score.insert(0, stream)
@@ -40,20 +40,19 @@ class MidiWriter:
     
     def generate_streams(self):
         streams = []
+        start_offset = min([note_list[0].start_frame for note_list in self.notes_to_write])
         for note_list in self.notes_to_write:
-            streams.append(self.__generate_stream(self, note_list))
+            streams.append(self.generate_stream(note_list, start_offset))
 
         return streams
     
-    def __generate_stream(self, notes_to_write):
-
-        start_offset = notes_to_write[0].start_frame
+    def generate_stream(self, notes_to_write, start_offset):
         
         stream = music21.stream.Stream()
 
         stream.insert(0, music21.tempo.MetronomeMark(number=self.bpm))
 
-        for note_recorded in self.notes_to_write:
+        for note_recorded in notes_to_write:
 
             note = music21.note.Note(note_recorded.note)
             # Set the duration of the note

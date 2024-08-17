@@ -12,6 +12,7 @@ from midi_scanner.utils.ColorMidiScanner import MidiScannerColor, ColorFormat
 from typing import List
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 import logging
 
@@ -85,8 +86,15 @@ def get_possible_bpm(fps, centroids):
 
     return possible_bpms
 
-def get_color_clusters(note_list : List[PlayedNote]) -> Tuple[List[MidiScannerColor],List[int]] :
+def get_color_clusters(note_list : List[PlayedNote]) -> Tuple[List[MidiScannerColor],List[MidiScannerColor], List[int], List[int]] :
+    """Computes the automated color clusters for white and black keys
 
+    Args:
+        note_list (List[PlayedNote]): List of black and white PlayedNotes
+
+    Returns:
+        Tuple[List[MidiScannerColor],List[MidiScannerColor], List[int], List[int]]: white/black cluster centroids, white/black cluster ids
+    """
     white_keys_colors = []
     black_keys_colors = []
     for note in note_list:
@@ -95,9 +103,30 @@ def get_color_clusters(note_list : List[PlayedNote]) -> Tuple[List[MidiScannerCo
         else:
             white_keys_colors.append(note.get_played_color().get_bgr())
     
+    if len(white_keys_colors) >= 10:
+        X_white = np.array(white_keys_colors).reshape(-1,3)
+        white_centroids, white_clusters_id = __get_automated_clusters(X_white)
+        white_colors = [MidiScannerColor(cluster_center, ColorFormat.BGR) for cluster_center in white_centroids]
 
-    X = np.array(white_keys_colors).reshape(-1,3)
+    else :
+        white_colors = white_clusters_id = None
+
+    if len(black_keys_colors) >= 10:
+
+        X_black = np.array(black_keys_colors).reshape(-1,3)
+        black_centroids, black_clusters_id = __get_automated_clusters(X_black)
+        black_colors = [MidiScannerColor(cluster_center, ColorFormat.BGR) for cluster_center in black_centroids]
+    else :
+            black_colors = black_clusters_id = None
+    return white_colors, black_colors, white_clusters_id, black_clusters_id
+
+
+def __get_automated_clusters(X:ArrayLike) -> Tuple[ArrayLike, List[int]]: 
     
+    if len(X.shape) != 2:
+        __postprocessing_logger.critical(f"Array must be of size 2 - shape is: [{X.shape}]")
+
+
     kmeans_kwargs = {
         #"init": "random",
         "n_init": 10,
@@ -111,44 +140,38 @@ def get_color_clusters(note_list : List[PlayedNote]) -> Tuple[List[MidiScannerCo
         kmeans.fit(X)
         sse.append(kmeans.inertia_)
 
-    plt.plot(range(1,9), sse)
-    plt.show()
+    # plt.plot(range(1,9), sse)
+    # plt.show()
 
     # we assume inertia is going down 
     
-    baseline = sse[0]
-    previous = sse[0]
-    nb_cluster_optim = 0
-    for i, inertia in enumerate(sse[1:]):
-        drop = (previous - inertia ) / baseline
-        __postprocessing_logger.debug(f"Drop: [{drop}]")
-        if drop < 0.01:
-            nb_cluster_optim = i + 1
-            break
-        previous = inertia
-    else:
-        nb_cluster_optim = len(sse)
-        __postprocessing_logger.warning("Did not find optimum number of clusters")
+    # baseline = sse[0]
+    # previous = sse[0]
+    # nb_cluster_optim = 0
+    # for i, inertia in enumerate(sse[1:]):
+    #     drop = (previous - inertia ) / baseline
+    #     __postprocessing_logger.debug(f"Drop: [{drop}]")
+    #     if drop < 0.01:
+    #         nb_cluster_optim = i + 1
+    #         break
+    #     previous = inertia
+    # else:
+    #     nb_cluster_optim = len(sse)
+    #     __postprocessing_logger.warning("Did not find optimum number of clusters")
 
-    __postprocessing_logger.debug(f"Inertias : [{sse}]")
+    # __postprocessing_logger.debug(f"Inertias : [{sse}]")
     # __postprocessing_logger.info(f"Using [{nb_cluster_optim}] clusters")
 
     kl = KneeLocator(
         range(1,9), sse, curve="convex", direction="decreasing"
     )
 
-    
-
     __postprocessing_logger.info(f"Using KneeLocator, optimum is {kl.elbow}")
 
     kmeans_best = KMeans(n_clusters=kl.elbow, **kmeans_kwargs)
 
-    note_clusters = kmeans_best.fit_predict(X)
+    cluster_idx = kmeans_best.fit_predict(X)
     
     cluster_centers = kmeans_best.cluster_centers_
-    __postprocessing_logger.debug(f"Centroids : [ {cluster_centers} ]")
 
-
-    colors = [MidiScannerColor(cluster_center, ColorFormat.BGR) for cluster_center in cluster_centers]
-
-    return colors, note_clusters
+    return cluster_centers, cluster_idx.tolist()

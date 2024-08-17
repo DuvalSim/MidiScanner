@@ -1,4 +1,5 @@
 .venv
+.conda
 .DS_Store
 .idea
 

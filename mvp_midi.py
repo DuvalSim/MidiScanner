@@ -1,7 +1,7 @@
 import argparse
 
 from midi_scanner.utils.StateSaver import StateSaver
-
+import dill
 from midi_scanner.NoteRecorder import NoteRecorder
 from midi_scanner.utils.ImageLogger import setup_image_logger
 import logging
@@ -195,16 +195,7 @@ class ApplicationController:
         # self.logger.debug(f"Color clusters {color_clusters_idx}")
         cv2.waitKey(0)
             
-        # Get USER INPUT ON COLOR
-
-        b_notes = 0
-        w_notes = 0
-        for note in note_played:
-            if note.is_black():
-                b_notes += 1
-            else:
-                w_notes += 1
-        
+        # Get USER INPUT ON COLOR    
 
         b_color_clusters_idx = [0] * (len(note_played) - len(w_color_clusters_idx))
 
@@ -215,7 +206,7 @@ class ApplicationController:
         # write notes to music sheet
 
         cluster_centers, clustered_notes = postprocessing.get_clusters(note_played)
-        self.logger.debug(f"Nb Notes:{len(note_played)} - {len(clustered_notes)}")
+
         fps = self.video_capture.get(cv2.CAP_PROP_FPS)
         suggested_bpm = postprocessing.get_possible_bpm(fps, cluster_centers)
 
@@ -232,16 +223,24 @@ class ApplicationController:
 
         note_writer = MidiWriter(note_played, note_stream_ids, bpm, fps)
         score = note_writer.generate_score()
+        score.show("text")
         # score = note_writer.generate_stream(note_played, note_played[0].start_frame)
         score.timeSignature = music21.meter.TimeSignature('4/4')
         # score.show('lily.pdf')
-        score.write('midi', fp='./output_files/go.mid')
+        score.write('musicxml', fp='./output_files/manual.musicxml')
+        score.write('midi', fp='./output_files/manual.mid')
+        score.write('musicxml', fp='./output_files/manual.musicxml')
+
+        
+        filehandler = open("./output_files/score", 'wb') 
+        dill.dump(score, filehandler)
 
         # # convert to xml with musescore
         
-        subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/go.musicxml", "./output_files/go.mid"])
+        subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/exported.musicxml", "./output_files/manual.mid"])
 
-        #t = music21.converter.parse("./output_files/go.musicxml")
+
+        t = music21.converter.parse("./output_files/go.musicxml")
         t = score
         newScore = music21.stream.Score()
 

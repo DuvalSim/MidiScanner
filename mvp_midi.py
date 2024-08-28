@@ -208,6 +208,9 @@ class ApplicationController:
         cluster_centers, clustered_notes = postprocessing.get_clusters(note_played)
 
         fps = self.video_capture.get(cv2.CAP_PROP_FPS)
+
+        self.logger.info(f"Video fps: {fps}")
+
         suggested_bpm = postprocessing.get_possible_bpm(fps, cluster_centers)
 
         cluster_population_percentage = [ round((clustered_notes == cluster_idx).mean() *100) for cluster_idx in range(len(cluster_centers))]
@@ -223,7 +226,7 @@ class ApplicationController:
 
         note_writer = MidiWriter(note_played, note_stream_ids, bpm, fps)
         score = note_writer.generate_score()
-        score.show("text")
+
         # score = note_writer.generate_stream(note_played, note_played[0].start_frame)
         score.timeSignature = music21.meter.TimeSignature('4/4')
         # score.show('lily.pdf')

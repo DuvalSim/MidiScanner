@@ -227,16 +227,14 @@ class ApplicationController:
         note_writer = MidiWriter(note_played, note_stream_ids, bpm, fps)
         score = note_writer.generate_score()
 
-        # score = note_writer.generate_stream(note_played, note_played[0].start_frame)
-        score.timeSignature = music21.meter.TimeSignature('4/4')
         # score.show('lily.pdf')
         score.write('musicxml', fp='./output_files/manual.musicxml')
         score.write('midi', fp='./output_files/manual.mid')
-        score.write('musicxml', fp='./output_files/manual.musicxml')
 
+        exit(0)
         
-        filehandler = open("./output_files/score", 'wb') 
-        dill.dump(score, filehandler)
+        # filehandler = open("./output_files/score", 'wb') 
+        # dill.dump(score, filehandler)
 
         # # convert to xml with musescore
         

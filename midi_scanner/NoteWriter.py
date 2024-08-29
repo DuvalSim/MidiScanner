@@ -32,9 +32,24 @@ class MidiWriter:
 
     def generate_score(self):
         score = music21.stream.Score()
-        streams = self.generate_streams()
-        for stream in streams:
-            score.insert(0, stream)
+        time_signature = music21.meter.TimeSignature('4/4')
+        key_signature = music21.key.KeySignature(0)  # C Major
+        tempo_mark = music21.tempo.MetronomeMark(number=self.bpm)
+        
+        parts = [music21.stream.Part(), music21.stream.Part()]
+        parts[0].append(music21.clef.TrebleClef())
+        parts[1].append(music21.clef.BassClef())
+
+        start_offset = min([note_list[0].start_frame for note_list in self.notes_to_write])
+
+        for part_idx, note_list in enumerate(self.notes_to_write):
+
+            parts[part_idx].append(time_signature)
+            parts[part_idx].append(key_signature)
+            parts[part_idx].append(tempo_mark)
+
+            
+            score.insert(0, self.generate_part(note_list, start_offset=start_offset))
 
         return score
     
@@ -45,6 +60,32 @@ class MidiWriter:
             streams.append(self.generate_stream(note_list, start_offset))
 
         return streams
+    
+    def generate_part(self, notes_to_write, start_offset):
+        stream = music21.stream.Part()
+
+        stream.insert(0, music21.tempo.MetronomeMark(number=self.bpm))
+        stream.insert(0,music21.meter.TimeSignature('4/4'))
+        # stream.insert(0,music21.key.KeySignature(0))  # C Major
+        
+        for note_recorded in notes_to_write:
+
+            note = music21.note.Note(note_recorded.note)
+            # Set the duration of the note
+            
+            #duration = round(note_recorded.nb_frame / rythm_in_frames,2)
+            
+            duration = MidiWriter.__get_closest_rythm(note_recorded.nb_frame * self.beat_per_frame)
+            
+            note.duration = music21.duration.Duration(duration)
+            
+            # moment where to insert the note
+            start = round((note_recorded.start_frame - start_offset) * self.beat_per_frame,1)
+            
+            # Add the Note object to the Stream
+            stream.insert(start, note)
+        
+        return stream
     
     def generate_stream(self, notes_to_write, start_offset):
         

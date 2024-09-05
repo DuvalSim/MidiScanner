@@ -1,7 +1,7 @@
 import argparse
 
 from midi_scanner.utils.StateSaver import StateSaver
-
+import dill
 from midi_scanner.NoteRecorder import NoteRecorder
 from midi_scanner.utils.ImageLogger import setup_image_logger
 import logging
@@ -13,6 +13,8 @@ from ctypes import windll
 from midi_scanner.GUI.CroppingWindow import CroppingWindow
 from midi_scanner.GUI.SelectFrameWindow import SelectFrameWindow
 from midi_scanner.GUI.SelectVideoInfoWindow import VideoInfoWindow
+from midi_scanner.GUI.KeyboardRoiWindow import KeyboardRoiWindow
+from midi_scanner.GUI.KeyboardBlackWhiteLimitWindow import KeyboardBlacWhiteLimitWindow
 
 from midi_scanner.GUI.MusicInfoWindow import MusicInfoWindow
 
@@ -25,6 +27,8 @@ from midi_scanner.NoteWriter import MidiWriter
 from midi_scanner.utils.ColorMidiScanner import MidiScannerColor, ColorFormat
 import midi_scanner.utils.postprocessing as postprocessing
 from midi_scanner.utils import visualization
+
+import midi_scanner.utils.gui_utils as gui_utils
 
 import music21
 import subprocess
@@ -134,85 +138,135 @@ class ApplicationController:
         last_frame_idx = 2500
         logging.debug(f"Clean frame idx: [{clean_frame_idx}]")
 
+        clean_frame = gui_utils.get_frame(self.video_capture, clean_frame_idx)
+
         # tk_last_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_LAST_FRAME_LABEL, first_frame=clean_frame_idx)
         # tk_last_frame.pack()
         # last_frame_idx = tk_last_frame.get_user_frame()
-        # logging.debug(f"last frame idx: [{last_frame_idx}]")
+        logging.debug(f"last frame idx: [{last_frame_idx}]")
 
         
-        # self.root.withdraw()
-        # self.keyboard_roi = CroppingWindow(video_capture=self.video_capture, frame_idx=clean_frame_idx).get_cropped_dimension()
-        self.keyboard_roi = (0,246,635,350)
-        logging.debug(f"keyboard roi: [{self.keyboard_roi}]")
+        self.image_processor = ImageProcessor()
+        self.image_processor.set_keyboard_roi_from_image(clean_frame)
+
+        # Updates image_processor
+        keyboard_roi_window = KeyboardRoiWindow(self.root, clean_frame, self.image_processor)
+    
+        keyboard_roi_window.pack()
+        keyboard_roi_window.wait_window()
+
+        print("roi:", self.image_processor.get_keyboard_roi())
+
+        self.image_processor.set_black_white_limit_from_image(clean_frame)
+
+        black_window = KeyboardBlacWhiteLimitWindow(self.root, clean_frame, self.image_processor)
+        black_window.pack()
+        black_window.wait_window()
+
+
+        self.logger.debug(self.image_processor)
+        
         status_callback = self.run_record_note_progress()
         
         note_recorder = NoteRecorder()
-        note_recorder.record_notes(video_capture=self.video_capture, starting_frame=clean_frame_idx, ending_frame=last_frame_idx, keyboard_roi=self.keyboard_roi,first_white_key="C3", first_black_key="c3", status_callback=status_callback)
+        
+        note_recorder.record_notes(video_capture=self.video_capture,
+                                    image_processor=self.image_processor,
+                                    starting_frame=clean_frame_idx, ending_frame=last_frame_idx,
+                                      first_white_key="C3", first_black_key="c3",
+                                      status_callback=status_callback)
         
         
 
         self.logger.info("Got notes, ending")
-        
+
+
         note_played = note_recorder.get_notes_recorded()
-        colors = postprocessing.get_possible_colors(note_played)
+        w_colors, b_colors, w_color_clusters_idx, b_color_clusters_idx = postprocessing.get_color_clusters(note_played)
+        
+        print(w_colors)
 
-        for i, color in enumerate(colors):
-            visualization.display_color(color, f"Color nb {i}")
+        for i, color in enumerate(w_colors):
+            visualization.display_color(color, f"WhiteColor nb {i}")
 
+        if b_colors is not None:
+            for i, color in enumerate(b_colors):
+                visualization.display_color(color, f"Black Color nb {i}")
+        # self.logger.debug(f"Color clusters {color_clusters_idx}")
         cv2.waitKey(0)
             
+        # Get USER INPUT ON COLOR    
 
-        # # write notes to music sheet
+        b_color_clusters_idx = [0] * (len(note_played) - len(w_color_clusters_idx))
 
-        # cluster_centers, clustered_notes = postprocessing.get_clusters(note_recorder.get_notes_recorded())
-        # fps = self.video_capture.get(cv2.CAP_PROP_FPS)
-        # suggested_bpm = postprocessing.get_possible_bpm(fps, cluster_centers)
+        note_stream_ids = [b_color_clusters_idx.pop(0) if note.is_black() else w_color_clusters_idx.pop(0) \
+                           for note_idx, note in enumerate(note_played)]
 
-        # cluster_population_percentage = [ round((clustered_notes == cluster_idx).mean() *100) for cluster_idx in range(len(cluster_centers))]
+
+        # write notes to music sheet
+
+        cluster_centers, clustered_notes = postprocessing.get_clusters(note_played)
+
+        fps = self.video_capture.get(cv2.CAP_PROP_FPS)
+
+        self.logger.info(f"Video fps: {fps}")
+
+        suggested_bpm = postprocessing.get_possible_bpm(fps, cluster_centers)
+
+        cluster_population_percentage = [ round((clustered_notes == cluster_idx).mean() *100) for cluster_idx in range(len(cluster_centers))]
         
-        # bpm_picker = MusicInfoWindow(self.root, suggested_bpm, cluster_population_percentage)
-        # bpm_picker.pack()
+        music_info_picker = MusicInfoWindow(self.root, suggested_bpm, cluster_population_percentage)
+        music_info_picker.pack()
 
-        # bpm = bpm_picker.pick_number()
+        bpm, timeSignature = music_info_picker.pick_info()
 
-        # self.logger.info(f"BPM chosen: [{bpm}]")
+        self.logger.info(f"BPM chosen: [{bpm}]")
 
-        # # Create midi file
+        # Create midi file
 
-        # note_writer = MidiWriter(note_recorder.get_notes_recorded(), bpm, fps)
-        # stream = note_writer.generate_stream()
-        # stream.timeSignature = music21.meter.TimeSignature('4/4')
-        # stream.show('lily.pdf')
-        # stream.write('midi', fp='./output_files/go.mid')
+        note_writer = MidiWriter(note_played, note_stream_ids, bpm, fps)
+        score = note_writer.generate_score()
+
+        score.write('musicxml', fp='./output_files/temp.musicxml')
+        score.write('midi', fp='./output_files/temp.mid')
 
         # # convert to xml with musescore
         
-        # subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/go.musicxml", "./output_files/go.mid"])
-
-        # t = music21.converter.parse("./output_files/go.musicxml")
-        
-        # newScore = music21.stream.Score()
+        subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/musescore_parsed.musicxml", "./output_files/temp.mid"])
 
 
-        # for idx, part in enumerate(t.parts):
-            
-        #     flat_part = part.flatten()
-        #     # Only for the first part
-        #     if idx == 0:
-        #         current_bpm = flat_part.getElementsByClass(music21.tempo.MetronomeMark)[0]
-        #         new_bpm = music21.tempo.MetronomeMark(number=bpm)
-        #         new_bpm.placement = "above"
-        #         flat_part.replace(current_bpm, new_bpm)
+        parsed_score = music21.converter.parse("./output_files/musescore_parsed.musicxml")
+        # Change the tempo:
 
-            
-        #     flat_part.timeSignature = music21.meter.TimeSignature('4/4')
-            
-        #     flat_part.makeNotation(inPlace=True)
-        #     newScore.insert(0, flat_part)
-        
-        # newScore.write('musicxml', fp='./output_files/final.xml')
-        
-        # self.quit()
+        # Get all tempo markings in the score
+        tempo_marks = parsed_score.flatten().getElementsByClass(music21.tempo.MetronomeMark)
+
+        # If there are tempo markings, update the first one
+        if tempo_marks:
+            # Modify the first tempo marking
+            tempo_mark = tempo_marks[0]
+            tempo_mark.number = bpm
+        else:
+            # If no tempo marking exists, create a new one and add it to the score
+            tempo_mark = music21.tempo.MetronomeMark(number=bpm)
+            # Add the tempo marking to the beginning of the score
+            parsed_score.insert(0, tempo_mark)
+
+        # Optionally, save the modified score back to MusicXML
+        parsed_score.write('musicxml', './output_files/final_tempo.musicxml')
+
+        # Change TimeSignature:
+        if timeSignature is not None:
+            newScore = music21.stream.Score()
+            for idx, part in enumerate(parsed_score.parts):
+                flat_part = part.flatten()
+                flat_part.timeSignature = music21.meter.TimeSignature(timeSignature)
+                newScore.insert(0, flat_part)
+
+            newScore.makeMeasures(inPlace=True)
+            newScore.write('musicxml', './output_files/final_TimeSignature.musicxml')
+
+        self.quit()
 
 
     
@@ -236,8 +290,8 @@ def main():
     #     help="path to yml state file",
     #     dest="state_file"
     # )
-    music21.environment.set("lilypondPath", "C:\\Program Files (x86)\\lilypond\\bin\\lilypond.exe")
-
+    #music21.environment.set("lilypondPath", "C:\\Program Files (x86)\\lilypond\\bin\\lilypond.exe")
+    # music21.environment.set("lilypondPath", "C:\\Users\\duva7214\\Documents\\Private\\Programs\\lilypond-2.24.3\\bin\\lilypond.exe")
     args = parser.parse_args()
     setup_image_logger(args.loglevel)
     

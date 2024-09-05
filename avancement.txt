@@ -44,4 +44,7 @@ Arrondir les frames à la dizaine la plus proche ?
 avancement:
 NoteRecorder: record notes
 
+idée: image processor fait tous les calculs à l'init à partir d'une image
+On peut ensuite modifier les attributs avec la GUI
+
 

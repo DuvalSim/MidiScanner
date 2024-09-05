@@ -104,3 +104,4 @@ class Keyboard:
         average_color_np = np.mean(current_image[:,key.start_x:key.end_x],axis=(0,1))
         
         return MidiScannerColor(average_color_np, color_format=ColorFormat.BGR)
+    

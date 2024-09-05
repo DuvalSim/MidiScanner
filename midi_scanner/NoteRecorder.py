@@ -15,6 +15,9 @@ from midi_scanner.utils.visualization import display_pressed_keys
 
 from typing import Callable
 
+
+# Class that handles analysis of the video
+# Takes a video capture and keyboard ROI.
 class NoteRecorder:
     
     def __init__(self) -> None:
@@ -99,14 +102,12 @@ class NoteRecorder:
     def get_notes_recorded(self) -> List[PlayedNote]:
         return self._notes_played
     
-    def record_notes(self, video_capture, starting_frame, ending_frame, keyboard_roi, first_white_key, first_black_key, status_callback: Callable[[float],None] = None ):
+    def record_notes(self, video_capture, starting_frame, ending_frame, image_processor, first_white_key, first_black_key, status_callback: Callable[[float],None] = None ):
 
         self._notes_playing = []
         self._notes_played = []
         self._current_frame = 0
 
-        # TODO: add ratio for image
-        image_processor = ImageProcessor(keyboard_roi)
  
         total_nb_frames = video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
         video_capture.set(cv2.CAP_PROP_POS_FRAMES,starting_frame)

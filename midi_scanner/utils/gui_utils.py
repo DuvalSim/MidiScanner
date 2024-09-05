@@ -12,3 +12,7 @@ def cv2_to_tkinter_image(cv2_image):
         pil_image = Image.fromarray(cv2_image)
         tkinter_image = ImageTk.PhotoImage(image=pil_image)
         return tkinter_image
+
+def get_frame(video_capture, frame_idx):
+        video_capture.set(cv2.CAP_PROP_POS_FRAMES,frame_idx)
+        return video_capture.read()[1]

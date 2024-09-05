@@ -18,4 +18,4 @@ class PlayedNote:
 		return self.__str__()
 	
 	def __str__(self):
-	 	return f"PlayedNote: start:[{self.start_frame}] - nb:[{self.nb_frame}] - note:[{self.note}]"	
+	 	return f"PlayedNote: start:[{self.start_frame}] - nb frames:[{self.nb_frame}] - note:[{self.note}]"	

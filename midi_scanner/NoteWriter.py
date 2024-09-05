@@ -32,21 +32,21 @@ class MidiWriter:
 
     def generate_score(self):
         score = music21.stream.Score()
-        time_signature = music21.meter.TimeSignature('4/4')
-        key_signature = music21.key.KeySignature(0)  # C Major
-        tempo_mark = music21.tempo.MetronomeMark(number=self.bpm)
+        # time_signature = music21.meter.TimeSignature('4/4')
+        # key_signature = music21.key.KeySignature(0)  # C Major
+        # tempo_mark = music21.tempo.MetronomeMark(number=self.bpm)
         
-        parts = [music21.stream.Part(), music21.stream.Part()]
-        parts[0].append(music21.clef.TrebleClef())
-        parts[1].append(music21.clef.BassClef())
+        # parts = [music21.stream.Part(), music21.stream.Part()]
+        # parts[0].append(music21.clef.TrebleClef())
+        # parts[1].append(music21.clef.BassClef())
 
         start_offset = min([note_list[0].start_frame for note_list in self.notes_to_write])
 
         for part_idx, note_list in enumerate(self.notes_to_write):
 
-            parts[part_idx].append(time_signature)
-            parts[part_idx].append(key_signature)
-            parts[part_idx].append(tempo_mark)
+        #     parts[part_idx].append(time_signature)
+        #     parts[part_idx].append(key_signature)
+        #     parts[part_idx].append(tempo_mark)
 
             
             score.insert(0, self.generate_part(note_list, start_offset=start_offset))

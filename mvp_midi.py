@@ -215,10 +215,10 @@ class ApplicationController:
 
         cluster_population_percentage = [ round((clustered_notes == cluster_idx).mean() *100) for cluster_idx in range(len(cluster_centers))]
         
-        bpm_picker = MusicInfoWindow(self.root, suggested_bpm, cluster_population_percentage)
-        bpm_picker.pack()
+        music_info_picker = MusicInfoWindow(self.root, suggested_bpm, cluster_population_percentage)
+        music_info_picker.pack()
 
-        bpm = bpm_picker.pick_number()
+        bpm, timeSignature = music_info_picker.pick_info()
 
         self.logger.info(f"BPM chosen: [{bpm}]")
 
@@ -227,43 +227,45 @@ class ApplicationController:
         note_writer = MidiWriter(note_played, note_stream_ids, bpm, fps)
         score = note_writer.generate_score()
 
-        # score.show('lily.pdf')
-        score.write('musicxml', fp='./output_files/manual.musicxml')
-        score.write('midi', fp='./output_files/manual.mid')
-
-        exit(0)
-        
-        # filehandler = open("./output_files/score", 'wb') 
-        # dill.dump(score, filehandler)
+        score.write('musicxml', fp='./output_files/temp.musicxml')
+        score.write('midi', fp='./output_files/temp.mid')
 
         # # convert to xml with musescore
         
-        subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/exported.musicxml", "./output_files/manual.mid"])
+        subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/musescore_parsed.musicxml", "./output_files/temp.mid"])
 
 
-        t = music21.converter.parse("./output_files/go.musicxml")
-        t = score
-        newScore = music21.stream.Score()
+        parsed_score = music21.converter.parse("./output_files/musescore_parsed.musicxml")
+        # Change the tempo:
 
+        # Get all tempo markings in the score
+        tempo_marks = parsed_score.flatten().getElementsByClass(music21.tempo.MetronomeMark)
 
-        for idx, part in enumerate(t.parts):
-            
-            flat_part = part.flatten()
-            # Only for the first part
-            if idx == 0:
-                current_bpm = flat_part.getElementsByClass(music21.tempo.MetronomeMark)[0]
-                new_bpm = music21.tempo.MetronomeMark(number=bpm)
-                new_bpm.placement = "above"
-                flat_part.replace(current_bpm, new_bpm)
+        # If there are tempo markings, update the first one
+        if tempo_marks:
+            # Modify the first tempo marking
+            tempo_mark = tempo_marks[0]
+            tempo_mark.number = bpm
+        else:
+            # If no tempo marking exists, create a new one and add it to the score
+            tempo_mark = music21.tempo.MetronomeMark(number=bpm)
+            # Add the tempo marking to the beginning of the score
+            parsed_score.insert(0, tempo_mark)
 
-            
-            flat_part.timeSignature = music21.meter.TimeSignature('4/4')
-            
-            flat_part.makeNotation(inPlace=True)
-            newScore.insert(0, flat_part)
-        
-        newScore.write('musicxml', fp='./output_files/final.xml')
-        
+        # Optionally, save the modified score back to MusicXML
+        parsed_score.write('musicxml', './output_files/final_tempo.musicxml')
+
+        # Change TimeSignature:
+        if timeSignature is not None:
+            newScore = music21.stream.Score()
+            for idx, part in enumerate(parsed_score.parts):
+                flat_part = part.flatten()
+                flat_part.timeSignature = music21.meter.TimeSignature(timeSignature)
+                newScore.insert(0, flat_part)
+
+            newScore.makeMeasures(inPlace=True)
+            newScore.write('musicxml', './output_files/final_TimeSignature.musicxml')
+
         self.quit()
 
 

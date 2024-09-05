@@ -25,8 +25,6 @@ class MidiWriter:
             cluster_idx = note_assigned_cluster[note_idx]
             self.notes_to_write[cluster_idx].append(note)
 
-        # self.notes_to_write = note_list        
-        self.logger.debug(f"notes to write: {self.notes_to_write}")
         self.bpm = bpm
         self.beat_per_frame =  bpm / (frame_per_seconds*60)
 

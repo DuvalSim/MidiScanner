@@ -14,14 +14,24 @@ import logging
 
 class Keyboard:
 
-    MIN_TRESHOLD_BOT = 20
-    MIN_TRESHOLD_TOP = 40
+    MIN_TRESHOLD_WHITE = 20
+    MIN_TRESHOLD_BLACK = 40
+
+    MIN_RATIO_WHITE_KEYS = 0.4
+    MIN_RATIO_BLACK_KEYS = 0.8
+
 
     #BLACK_KEYS_MIN_AVG = 50
     
     def __init__(self, img_clear_keyboard, white_start_key="A0", black_start_key="a0"):
         self.white_keys = []
         self.black_keys = []
+
+        self.min_binary_thresh_black = Keyboard.MIN_TRESHOLD_BLACK
+        self.min_binary_thresh_white = Keyboard.MIN_TRESHOLD_WHITE
+        self.min_diff_ratio_white_keys = Keyboard.MIN_RATIO_WHITE_KEYS
+        self.min_diff_ratio_black_keys = Keyboard.MIN_RATIO_BLACK_KEYS
+
         self.img_clear_keyboard = img_clear_keyboard
         self._logger = logging.getLogger(__name__)
 
@@ -51,14 +61,15 @@ class Keyboard:
 
 
         t_value_bot, thresh_bot = cv2.threshold(diff_bot, 100, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)#[1]	
-        if t_value_bot < Keyboard.MIN_TRESHOLD_BOT:
-            thresh_bot = cv2.threshold(diff_bot, Keyboard.MIN_TRESHOLD_BOT, 255, cv2.THRESH_BINARY)[1]
+        if t_value_bot < self.min_binary_thresh_white:
+            thresh_bot = cv2.threshold(diff_bot, self.min_binary_thresh_white, 255, cv2.THRESH_BINARY)[1]
         #print("thresh value bot - ", t_value)
         
         
         t_value_top, thresh_top = cv2.threshold(diff_top, 100, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)#[1]
-        if t_value_top < Keyboard.MIN_TRESHOLD_BOT:
-            thresh_top = cv2.threshold(diff_top, Keyboard.MIN_TRESHOLD_TOP, 255, cv2.THRESH_BINARY)[1]
+        # self._logger.debug(f"current threshold value: {t_value_top}")
+        if t_value_top < self.min_binary_thresh_black:
+            thresh_top = cv2.threshold(diff_top, self.min_binary_thresh_black, 255, cv2.THRESH_BINARY)[1]
         #print("thresh value top - ", t_value_top)
 
         
@@ -73,7 +84,7 @@ class Keyboard:
         for key in self.white_keys:
 
             #print(f"Note {key.note} : {key.start_x} - {key.end_x} - {np.mean(thresh_bot[:,key.start_x:key.end_x] / 255)}")
-            if np.mean(thresh_bot[:,key.start_x:key.end_x] / 255) > 0.4:
+            if np.mean(thresh_bot[:,key.start_x:key.end_x] / 255) > self.min_diff_ratio_white_keys:
 
                 average_color = self.__get_average_key_color(key, current_image=current_bot)
 
@@ -86,7 +97,7 @@ class Keyboard:
 
             #print(f"Note {key.note} : {key.start_x} - {key.end_x} - {np.mean(thresh_top[:,key.start_x:key.end_x] / 255)}")
 
-            if np.mean(thresh_top[:,key.start_x:key.end_x] / 255) > 0.4:
+            if np.mean(thresh_top[:,key.start_x:key.end_x] / 255) > self.min_diff_ratio_black_keys:
 
                 average_color = self.__get_average_key_color(key, current_image=current_top)
 
@@ -104,4 +115,3 @@ class Keyboard:
         average_color_np = np.mean(current_image[:,key.start_x:key.end_x],axis=(0,1))
         
         return MidiScannerColor(average_color_np, color_format=ColorFormat.BGR)
-    

@@ -16,6 +16,8 @@ class FrameSliderWindowBase(tk.Frame):
         self.logger = logging.getLogger(__class__.__name__)
        
         self.video_capture = video_capture
+
+        self.video_capture.set(cv2.CAP_PROP_POS_FRAMES,int(first_frame))
         
         _, self.current_frame_cv = self.video_capture.read()
 

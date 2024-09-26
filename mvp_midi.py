@@ -1,5 +1,6 @@
 import argparse
 
+from midi_scanner.GUI.AdjustSensibilityWindow import AdjustSensibilityWindow
 from midi_scanner.utils.StateSaver import StateSaver
 import dill
 from midi_scanner.NoteRecorder import NoteRecorder
@@ -165,6 +166,12 @@ class ApplicationController:
         black_window.wait_window()
 
 
+        # sensibility_window = AdjustSensibilityWindow(self.root, self.video_capture, image_processor=self.image_processor, first_frame=clean_frame_idx, last_frame=last_frame_idx)
+        # sensibility_window.pack()
+        # sensibility_window.wait_window()
+        # exit(0)
+
+
         self.logger.debug(self.image_processor)
         
         status_callback = self.run_record_note_progress()
@@ -174,7 +181,7 @@ class ApplicationController:
         note_recorder.record_notes(video_capture=self.video_capture,
                                     image_processor=self.image_processor,
                                     starting_frame=clean_frame_idx, ending_frame=last_frame_idx,
-                                      first_white_key="C3", first_black_key="c3",
+                                      first_white_key="A0", first_black_key="a0",
                                       status_callback=status_callback)
         
         

@@ -37,14 +37,15 @@ regrouper sur les plus proches.
 
 -------------------------------------
 
-avoir le BPM + type de mesure !
 
 Arrondir les frames à la dizaine la plus proche ?
 
-avancement:
-NoteRecorder: record notes
+----------------------------------------------
 
-idée: image processor fait tous les calculs à l'init à partir d'une image
-On peut ensuite modifier les attributs avec la GUI
+todo:
+- parametriser la sensi etc
+- window pour les couleurs (faire un kmeans quand l'utilisateur choisi le nb de couleurs)
+- keyboard: trouver automatiquement les notes > demander à un moemnt quelle note est la première pour valider (à la fin ?)
+
 
 

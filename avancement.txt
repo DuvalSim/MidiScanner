@@ -43,7 +43,6 @@ Arrondir les frames à la dizaine la plus proche ?
 ----------------------------------------------
 
 todo:
-- parametriser la sensi etc
 - window pour les couleurs (faire un kmeans quand l'utilisateur choisi le nb de couleurs)
 - keyboard: trouver automatiquement les notes > demander à un moemnt quelle note est la première pour valider (à la fin ?)
 

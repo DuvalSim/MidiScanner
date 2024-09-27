@@ -132,22 +132,26 @@ class ApplicationController:
 
         self.root.deiconify()
 
-        tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
-        tk_first_frame.pack()
-        clean_frame_idx = tk_first_frame.get_user_frame()
+        # tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
+        # tk_first_frame.pack()
+        # clean_frame_idx = tk_first_frame.get_user_frame()
 
-        logging.debug(f"Clean frame idx: [{clean_frame_idx}]")
+        # logging.debug(f"Clean frame idx: [{clean_frame_idx}]")
 
+        
+
+        # tk_last_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_LAST_FRAME_LABEL, first_frame=clean_frame_idx)
+        # tk_last_frame.pack()
+        # last_frame_idx = tk_last_frame.get_user_frame()
+        # logging.debug(f"last frame idx: [{last_frame_idx}]")
+
+
+
+        clean_frame_idx = 164
+        last_frame_idx = 2500
+        
         clean_frame = gui_utils.get_frame(self.video_capture, clean_frame_idx)
 
-        tk_last_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_LAST_FRAME_LABEL, first_frame=clean_frame_idx)
-        tk_last_frame.pack()
-        last_frame_idx = tk_last_frame.get_user_frame()
-        logging.debug(f"last frame idx: [{last_frame_idx}]")
-
-        # clean_frame_idx = 164
-        # last_frame_idx = 2500
-        
         self.image_processor = ImageProcessor()
         self.image_processor.set_keyboard_roi_from_image(clean_frame)
 
@@ -190,9 +194,14 @@ class ApplicationController:
 
 
         note_played = note_recorder.get_notes_recorded()
+
+        video_info_window = VideoInfoWindow(self.root, self.video_capture, note_played_list=note_played)
+        video_info_window.pack()
+        t = video_info_window.pick_music_info()
+        print("Got", t)
+        exit(0)
         w_colors, b_colors, w_color_clusters_idx, b_color_clusters_idx = postprocessing.get_color_clusters(note_played)
         
-        print(w_colors)
 
         for i, color in enumerate(w_colors):
             visualization.display_color(color, f"WhiteColor nb {i}")

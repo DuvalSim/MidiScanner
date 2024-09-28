@@ -37,7 +37,19 @@ class VideoInfoWindow(FrameSliderWindowBase):
             current_frame_color = tk.Frame(frame_colors)
             tk.Label(current_frame_color, text=f"Part {part_idx + 1}:").pack()
 
-            color_canvas = tk.Canvas(current_frame_color, width=15, height=10, bg="gray")
+            tk.Label(current_frame_color, text=f"Black Keys:").pack()
+            color = self.part_colors_b[part_idx].get_hex() if self.part_colors_b[part_idx] is not None else "gray"
+            
+            color_canvas = tk.Canvas(current_frame_color, width=15, height=10, bg=color)
+            color_canvas.bind("<Button-1>", lambda event, arg=part_idx: self.on_color_picker_click(event, arg))
+            color_canvas.pack()
+
+            self.color_canvas.append(color_canvas)
+
+            tk.Label(current_frame_color, text=f"White Keys:").pack()
+            color = self.part_colors_w[part_idx].get_hex() if self.part_colors_w[part_idx] is not None else "gray"
+            
+            color_canvas = tk.Canvas(current_frame_color, width=15, height=10, bg=color)
             color_canvas.bind("<Button-1>", lambda event, arg=part_idx: self.on_color_picker_click(event, arg))
             color_canvas.pack()
 

@@ -114,7 +114,7 @@ def assign_points_to_clusters(points, centroids):
     return closest_centroids
 
 # Perform K-means clustering and find the optimum number of clusters
-def get_color_clusters(color_list : List[MidiScannerColor], max_clusters=4, distance_threshold=3) -> Tuple[int, List[MidiScannerColor]]:
+def get_color_clusters(color_list : List[MidiScannerColor], max_clusters=4, distance_threshold=10) -> Tuple[int, List[MidiScannerColor]]:
     """Get color optimim cluter centroids
 
     Args:
@@ -176,7 +176,7 @@ def get_black_white_notes(note_list : List[PlayedNote]) -> Tuple[List[PlayedNote
 
 
 # Assume list not empty
-def get_black_white_color_clusters(note_list: List[PlayedNote], max_clusters=4, distance_threshold=3) -> Tuple[int, List[MidiScannerColor], List[MidiScannerColor]]:
+def get_black_white_color_clusters(note_list: List[PlayedNote], max_clusters=4, distance_threshold=10) -> Tuple[int, List[MidiScannerColor], List[MidiScannerColor]]:
     """_summary_
 
     Args:
@@ -231,11 +231,13 @@ def get_black_white_color_clusters(note_list: List[PlayedNote], max_clusters=4, 
 
         # Find the missing integers by subtracting the given list from the complete set
         missing_clusters = complete_set - set(black_assignement)
-        black_assignement = black_assignement + missing_clusters
+        black_assignement = list(black_assignement) + list(missing_clusters)
         b_centroids = b_centroids[black_assignement]
 
         for _ in range(len(missing_clusters)):
             w_centroids.append(None)
+
+    return overall_num_clusters, b_centroids, w_centroids
 
 def get_color_assignment(color_list_1:List[MidiScannerColor], color_list_2: List[MidiScannerColor]):
 

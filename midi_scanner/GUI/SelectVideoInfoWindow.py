@@ -8,69 +8,82 @@ from midi_scanner.utils import postprocessing
 from midi_scanner.utils.gui_utils import cv2_to_tkinter_image
 from midi_scanner.GUI.FrameSliderWindowBase import FrameSliderWindowBase
 
+from midi_scanner.utils.ColorMidiScanner import MidiScannerColor, ColorFormat
+
 class VideoInfoWindow(FrameSliderWindowBase):
 
-    def __init__(self, parent, video_capture, note_played_list) -> None:
+    def __init__(self, parent, video_capture, note_played_list, max_parts = 4) -> None:
 
         super(VideoInfoWindow, self).__init__(parent, video_capture=video_capture)
         
-        self.parent = parent
+        num_clusters, b_centroids, w_centroids = postprocessing.get_black_white_color_clusters(note_played_list, max_clusters=max_parts)
 
+        self.max_parts = max_parts
+        self.min_parts = 1
+        self.nb_parts = num_clusters
+        # Init color table
+        ### Grey
+        default_color = MidiScannerColor("#606060", ColorFormat.HEX)
+        self.part_colors = []
+        for part_idx in range(max_parts):
+            part_color_black = b_centroids[part_idx] if b_centroids[part_idx] is not None else default_color
+            part_color_white = w_centroids[part_idx] if w_centroids[part_idx] is not None else default_color
+            self.part_colors.append((part_color_black, part_color_white))
 
-        num_clusters, b_centroids, w_centroids = postprocessing.get_black_white_color_clusters(note_played_list)
-
+         
+        # inherited from parent class
         self.img_label.bind("<Button-1>", self.on_img_click)
 
         
         info_frame = tk.Frame(self)
            
-        self.nb_parts = num_clusters
-        self.color_canvas = []
         
-        self.part_colors_w = w_centroids
-        self.part_colors_b = b_centroids
         
-        frame_colors = tk.Frame(info_frame)
-        tk.Label(frame_colors, text="Select color for each part:").pack()
-            
-        for part_idx in range(self.nb_parts):
-            current_frame_color = tk.Frame(frame_colors)
-            tk.Label(current_frame_color, text=f"Part {part_idx + 1}:").pack()
+        
+        tk.Label(self, "Select number of parts and key color for each part:", ).pack()
+        tk.Label(self, "Use detected color or pick one by selecting a part and click on the frame").pack()
 
-            tk.Label(current_frame_color, text=f"Black Keys:").pack()
-            color = self.part_colors_b[part_idx].get_hex() if self.part_colors_b[part_idx] is not None else "gray"
-            
-            color_canvas = tk.Canvas(current_frame_color, width=15, height=10, bg=color)
-            color_canvas.bind("<Button-1>", lambda event, arg=part_idx: self.on_color_picker_click(event, arg))
-            color_canvas.pack()
 
-            self.color_canvas.append(color_canvas)
+        self.colors_frame = tk.Frame(info_frame)
 
-            tk.Label(current_frame_color, text=f"White Keys:").pack()
-            color = self.part_colors_w[part_idx].get_hex() if self.part_colors_w[part_idx] is not None else "gray"
-            
-            color_canvas = tk.Canvas(current_frame_color, width=15, height=10, bg=color)
-            color_canvas.bind("<Button-1>", lambda event, arg=part_idx: self.on_color_picker_click(event, arg))
-            color_canvas.pack()
-
-            self.color_canvas.append(color_canvas)
-
-            current_frame_color.pack(side="left")
-            
-
-        self.color_canvas[0].configure(highlightthickness=1, highlightbackground="black")
-        self.color_canvas[0].update()
-        self.selected_picker = 0 
-
-        frame_colors.pack()
-        info_frame.pack(side="left")
-
+        self.refresh_colors()
+        self.selected_picker = "00"
         
         confirm_button = tk.Button(self, text="Confirm")
-        confirm_button.pack(side="left",fill="x")
+        confirm_button.pack(side="bottom",fill="x")
         confirm_button.bind("<Button-1>", self.confirm_selection)
         
 
+    def refresh_colors(self):
+
+        for widget in self.colors_frame.grid_slaves():
+            # if isinstance(widget, tk.Canvas):
+            widget.grid_forget()
+
+        tk.Label(self.colors_frame, "Black key colors:").grid(row=1, column=0, padx=10, pady=10)
+        tk.Label(self.colors_frame, "White key colors:").grid(row=3, column=0, padx=10, pady=10)
+
+        tk.Label("Part:").grid(row=0, column=0, padx=10, pady=10)
+        for part_idx in range(self.nb_parts):
+            tk.Label(self.colors_frame, f"{part_idx + 1}").grid(row=0, column=part_idx + 1, padx=10, pady=10)
+        
+        self.color_pickers_dict = {}
+        for part_idx in range(self.nb_parts):
+            for key_type_idx in range(2):
+                color_canvas = tk.Canvas(self.colors_frame, width=50, height=50, bg=self.part_colors[part_idx][key_type_idx])
+                color_canvas.bind("<Button-1>", lambda event, arg=f"{part_idx}{key_type_idx}": self.on_color_picker_click(event, arg))
+                color_canvas.grid(row=key_type_idx*2 + 2, column=part_idx, padx=5, pady=5)
+                self.color_pickers_dict[f"{part_idx}{key_type_idx}"] = color_canvas
+
+    def increase_nb_parts(self):
+        if self.nb_parts < self.max_parts:
+            self.x += 1
+            self.refresh_colors()
+
+    def decrease_nb_parts(self):
+        if self.nb_parts > self.min_parts:
+            self.nb_parts -= 1
+            self.refresh_colors()
 
     def on_img_click(self, event):
         """Handle mouse click event."""
@@ -79,23 +92,23 @@ class VideoInfoWindow(FrameSliderWindowBase):
         pixel_value = self.current_frame_cv[y, x]
         print("Pixel value at ({}, {}): {}".format(x, y, pixel_value))
         color = '#%02x%02x%02x' % (pixel_value[2], pixel_value[1], pixel_value[0])
-        self.color_canvas[self.selected_picker].config(bg=color)
-        self.color_canvas[self.selected_picker].update()
+        self.color_pickers_dict[self.selected_picker].config(bg=color)
+        self.color_pickers_dict[self.selected_picker].update()
 
-        self.part_colors[self.selected_picker] = color
+        ## Change selected picker to be set (part, type) + same for dict
+        self.part_colors[]
 
-    def on_color_picker_click(self, event, color_picker_idx):
-        if color_picker_idx != self.selected_picker:
-            for i in range(len(self.color_canvas)):
-                if i != color_picker_idx:
-                    self.color_canvas[i].config(highlightthickness=0)
-                else:
-                    self.color_canvas[color_picker_idx].config(highlightthickness=1, highlightbackground="black")
-                    
-                self.color_canvas[i].update()
+    def on_color_picker_click(self, event, color_picker_id):
+        if color_picker_id != self.selected_picker:
+            self.color_pickers_dict[self.selected_picker].config(highlightthickness=0)
+            self.color_pickers_dict[self.selected_picker].update()
             
-            self.selected_picker = color_picker_idx    
-        
+
+            self.color_pickers_dict[color_picker_id].config(highlightthickness=2, highlightbackground="black")
+            self.color_pickers_dict[color_picker_id].update()
+            
+            self.selected_picker = color_picker_id
+
     def confirm_selection(self, event):
         
         if not any([part_color is None for part_color in self.part_colors]):

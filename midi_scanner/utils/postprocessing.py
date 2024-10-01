@@ -258,3 +258,20 @@ def get_color_assignment(color_list_1:List[MidiScannerColor], color_list_2: List
             final_assignments.append(assignement)
             if len(final_assignments) == shortest_len:
                 return final_assignments
+            
+
+def get_note_part(note_list: List[PlayedNote], black_key_colors: List[MidiScannerColor], white_key_colors: List[MidiScannerColor]) -> List[int]:
+    # Not optimized because assign_points_to_clusters works on a matrix (better to provide each note directly)
+    assigned_part_list = []
+    black_key_colors = [color.get_lab() for color in black_key_colors]
+    white_key_colors = [color.get_lab() for color in white_key_colors]
+    for note in note_list:
+        note_color_reshaped = np.expand_dims(note.get_played_color().get_lab(), axis=0)
+        if note.is_black():
+            
+            assigned_part_list.append(int(assign_points_to_clusters(note_color_reshaped, black_key_colors)[0]))
+        else:
+            assigned_part_list.append(int(assign_points_to_clusters(note_color_reshaped, white_key_colors)[0]))
+    
+    return assigned_part_list
+            

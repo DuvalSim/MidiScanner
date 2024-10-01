@@ -197,28 +197,9 @@ class ApplicationController:
 
         video_info_window = VideoInfoWindow(self.root, self.video_capture, note_played_list=note_played)
         video_info_window.pack()
-        t = video_info_window.pick_music_info()
-        print("Got", t)
-        exit(0)
-        w_colors, b_colors, w_color_clusters_idx, b_color_clusters_idx = postprocessing.get_color_clusters(note_played)
-        
+        black_keys_part_color_list, white_key_part_color_list = video_info_window.pick_music_info()
 
-        for i, color in enumerate(w_colors):
-            visualization.display_color(color, f"WhiteColor nb {i}")
-
-        if b_colors is not None:
-            for i, color in enumerate(b_colors):
-                visualization.display_color(color, f"Black Color nb {i}")
-        # self.logger.debug(f"Color clusters {color_clusters_idx}")
-        cv2.waitKey(0)
-            
-        # Get USER INPUT ON COLOR    
-
-        b_color_clusters_idx = [0] * (len(note_played) - len(w_color_clusters_idx))
-
-        note_stream_ids = [b_color_clusters_idx.pop(0) if note.is_black() else w_color_clusters_idx.pop(0) \
-                           for note_idx, note in enumerate(note_played)]
-
+        note_part_idx_list = postprocessing.get_note_part(note_played, black_keys_part_color_list, white_key_part_color_list)
 
         # write notes to music sheet
 
@@ -241,7 +222,7 @@ class ApplicationController:
 
         # Create midi file
 
-        note_writer = MidiWriter(note_played, note_stream_ids, bpm, fps)
+        note_writer = MidiWriter(note_played, note_part_idx_list, bpm, fps)
         score = note_writer.generate_score()
 
         score.write('musicxml', fp='./output_files/temp.musicxml')

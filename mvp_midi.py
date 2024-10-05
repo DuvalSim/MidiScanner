@@ -120,16 +120,6 @@ class ApplicationController:
             
         self.__open_video(music_video_filepath)
 
-        # self.root.deiconify()
-        # self.root.withdraw()
-        # t = VideoInfoWindow(self.root, self.video_capture)
-        # t.pack()
-        # test = t.pick_music_info()
-        
-        # logging.debug(f"Got colors: {test}")
-
-        
-
         self.root.deiconify()
 
         # tk_first_frame = SelectFrameWindow(self.root, self.video_capture, window_name=SELECT_FIRST_FRAME_LABEL)
@@ -161,8 +151,6 @@ class ApplicationController:
         keyboard_roi_window.pack()
         keyboard_roi_window.wait_window()
 
-        print("roi:", self.image_processor.get_keyboard_roi())
-
         self.image_processor.set_black_white_limit_from_image(clean_frame)
 
         black_window = KeyboardBlacWhiteLimitWindow(self.root, clean_frame, self.image_processor)
@@ -174,9 +162,6 @@ class ApplicationController:
         # sensibility_window.pack()
         # sensibility_window.wait_window()
         # exit(0)
-
-
-        self.logger.debug(self.image_processor)
         
         status_callback = self.run_record_note_progress()
         

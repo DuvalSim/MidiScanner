@@ -81,7 +81,7 @@ def display_connected_components(num_labels, labeled_image, stats, centroids, bl
 		img_notes = cv2.putText(img_notes, black_note, (int(centroid_x), int(centroid_y)),
 												fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=0.4, color=(255, 255, 255), thickness=1)
 
-	cv2.imshow('Note img', img_notes)
+	cv2.imshow('Black keys image', img_notes)
 
 
 def put_white_notes_on_image(base_image, notes):

@@ -3,8 +3,12 @@ import numpy as np
 from midi_scanner.utils.visualization import display_connected_components, display_lines, put_white_notes_on_image
 from midi_scanner.Key import Key
 
+from typing import List
+
 blackNoteString = "a0c1d1f1g1a1c2d2f2g2a2c3d3f3g3a3c4d4f4g4a4c5d5f5g5a5c6d6f6g6a6c7d7f7g7a7"
 whiteNoteString = "A0B0C1D1E1F1G1A1B1C2D2E2F2G2A2B2C3D3E3F3G3A3B3C4D4E4F4G4A4B4C5D5E5F5G5A5B5C6D6E6F6G6A6B6C7D7E7F7G7A7B7C8"
+
+keyboard_note_list = ['C','c', 'D','d', 'E', 'F','f', 'G', 'g','A', 'a', 'B']
 
 
 def _get_keys_from_lines(lines, start_key, img_width):
@@ -39,7 +43,7 @@ def _get_keys_from_lines(lines, start_key, img_width):
 	return notes
 
 
-def get_black_keys(clean_frame, start_key="a0"):
+def get_black_keys(clean_frame, start_key="a0") -> List[Key]:
 	img_grey = cv2.cvtColor(clean_frame, cv2.COLOR_RGB2GRAY)
 	thresh, img_binary = cv2.threshold(img_grey, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
@@ -47,11 +51,12 @@ def get_black_keys(clean_frame, start_key="a0"):
 
 	# Erode to remove lines between white keys
 	eroded = cv2.erode(img_negative, cv2.getStructuringElement(cv2.MORPH_ERODE, (7, 7)))
-
+	dilated = cv2.dilate(eroded, cv2.getStructuringElement(cv2.MORPH_DILATE, (5,5 )))
 	# Perform connected component labeling on the negative image
-	num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(eroded)
+	num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(dilated)
 
 	display_connected_components(num_labels, labels, stats, centroids, blackNoteString)
+	cv2.waitKey(0)
 	offset = blackNoteString.find(start_key)
 
 	# TODO
@@ -74,7 +79,7 @@ def get_black_keys(clean_frame, start_key="a0"):
 	return black_keys
 
 
-def get_white_keys(clean_frame, start_key = "A0"):
+def get_white_keys(clean_frame, start_key = "A0") -> List[Key]:
 	im_height = clean_frame.shape[0]
 	im_bottom = clean_frame[int(im_height - (im_height / 3)):im_height, :]
 

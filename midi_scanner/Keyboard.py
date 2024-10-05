@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 
 from midi_scanner.utils.key_detection import get_black_keys, get_white_keys
+import midi_scanner.utils.key_detection as key_detection
 from midi_scanner.utils.preprocessing import get_lower_image
 from midi_scanner.utils.ColorMidiScanner import MidiScannerColor, ColorFormat
 from midi_scanner.Key import Key, PressedKey
@@ -40,6 +41,92 @@ class Keyboard:
     def _populate_keys(self, img_clear_keyboard, white_start_key="A0", black_start_key="a0"):
         self.white_keys = get_white_keys(clean_frame=img_clear_keyboard, start_key=white_start_key)
         self.black_keys = get_black_keys(clean_frame=img_clear_keyboard, start_key=black_start_key)
+
+        ordered_key_list = []
+        white_key_idx = 0
+        black_key_idx = 0
+        nb_black_keys = len(self.black_keys)
+        nb_white_keys = len(self.white_keys)
+
+        while white_key_idx < nb_white_keys and black_key_idx < nb_black_keys:
+            if self.white_keys[white_key_idx].start_x <= self.black_keys[black_key_idx].start_x:
+                ordered_key_list.append(self.white_keys[white_key_idx])
+                white_key_idx += 1
+            else:
+                ordered_key_list.append(self.black_keys[black_key_idx])
+                black_key_idx += 1
+
+        # One of the list is complete, fill with the rest
+        ordered_key_list += self.black_keys[black_key_idx:] if black_key_idx != nb_black_keys else self.white_keys[white_key_idx:]
+
+        first_double_white_key_idx = self.__find_first_consecutive_white_keys(key_list=ordered_key_list)
+        second_double_white_key_idx = self.__find_first_consecutive_white_keys(key_list=ordered_key_list[first_double_white_key_idx+1:])
+        
+        if first_double_white_key_idx is None or second_double_white_key_idx is None:
+            self._logger.warning("Could not detect keyboard notes automatically")
+            return
+        
+        # convert to real idx in complete list
+        second_double_white_key_idx += first_double_white_key_idx + 1
+
+        if (second_double_white_key_idx - first_double_white_key_idx) == 5:
+            # First two consecutive white notes are B and C
+            first_note_idx = (key_detection.keyboard_note_list.index('B') - first_double_white_key_idx) % len(key_detection.keyboard_note_list)
+
+        elif (second_double_white_key_idx - first_double_white_key_idx) == 7:
+            # First two consecutive white notes are E and F
+            first_note_idx = (key_detection.keyboard_note_list.index('E') - first_double_white_key_idx) % len(key_detection.keyboard_note_list)
+        else:
+            # Error:
+            self._logger.critical("Error while interpreting key notes")
+            raise RuntimeError("Could not parse keyboard correctly")
+
+        # for note_idx in range(len(ordered_key_list)):
+        #     idx = (first_note_idx + note_idx) % len(key_detection.keyboard_note_list)
+        #     new_note = key_detection.keyboard_note_list[idx]
+
+
+        #     if (new_note.lower() == new_note) != ordered_key_list[note_idx].is_black():
+        #         self._logger.critical("Error while interpreting key notes -- no right order")
+        #         raise RuntimeError("Could not parse keyboard correctly")
+            
+        #     ordered_key_list[note_idx].note = new_note
+        
+        middle_key_idx = len(ordered_key_list) // 2
+        nb_keyboard_notes = len(key_detection.keyboard_note_list)
+        middle_note_idx = (first_note_idx + middle_key_idx) % nb_keyboard_notes
+
+        # We want middle note to be 4th octave (C3 - A3)
+        
+        middle_note_idx_transposed = nb_keyboard_notes * 3 + middle_note_idx
+
+        # Check that the keyboard on the left side has enough keys to fit all the notes
+        while middle_note_idx_transposed < middle_key_idx:
+            # transpose to one higher octave
+            middle_note_idx_transposed += nb_keyboard_notes
+
+        # TODO: check that right part of the keyboard is large enough
+
+        first_note_idx_transposed = middle_note_idx_transposed - middle_key_idx
+
+        for key_idx in range(len(ordered_key_list)):
+
+            note = key_detection.keyboard_note_list[(first_note_idx_transposed + key_idx) % nb_keyboard_notes]
+            octave = (first_note_idx_transposed + key_idx) // nb_keyboard_notes
+            ordered_key_list[key_idx].note = note + str(octave)
+
+            if (note.lower() == note) != ordered_key_list[key_idx].is_black():
+                self._logger.critical("Error while interpreting key notes -- no right order")
+                raise RuntimeError("Could not parse keyboard correctly")
+            
+        print("test")
+
+    @staticmethod
+    def __find_first_consecutive_white_keys(key_list)-> int:
+        for i in range(len(key_list) - 1):
+            if not(key_list[i].is_black() or key_list[i + 1].is_black()):
+                return i
+        return None
     
     def get_pressed_keys(self, current_frame) -> List[PressedKey]:
 

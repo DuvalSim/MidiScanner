@@ -18,7 +18,7 @@ class VideoInfoWindow(FrameSliderWindowBase):
 
         super(VideoInfoWindow, self).__init__(parent, video_capture=video_capture)
         
-        num_clusters, b_centroids, w_centroids = postprocessing.get_black_white_color_clusters(note_played_list, max_clusters=max_parts)
+        num_clusters, b_centroids, w_centroids = postprocessing.get_black_white_color_clusters(note_played_list, max_clusters=max_parts, distance_threshold=20)
         self.parent = parent
         self.max_parts = max_parts
         self.min_parts = 1
@@ -29,8 +29,8 @@ class VideoInfoWindow(FrameSliderWindowBase):
         self.part_colors = []
         for part_idx in range(self.nb_parts):
             
-            part_color_black = b_centroids[part_idx] if b_centroids[part_idx] is not None else default_color
-            part_color_white = w_centroids[part_idx] if w_centroids[part_idx] is not None else default_color
+            part_color_black = b_centroids[part_idx] if (b_centroids is not None and b_centroids[part_idx] is not None) else default_color
+            part_color_white = w_centroids[part_idx] if (w_centroids is not None and w_centroids[part_idx] is not None) else default_color
             self.part_colors.append([part_color_black, part_color_white])
         
         # fill the rest:

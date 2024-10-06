@@ -25,8 +25,6 @@ class Keyboard:
     #BLACK_KEYS_MIN_AVG = 50
     
     def __init__(self, img_clear_keyboard, white_start_key="A0", black_start_key="a0"):
-        self.white_keys = []
-        self.black_keys = []
 
         self.min_binary_thresh_black = Keyboard.MIN_TRESHOLD_BLACK
         self.min_binary_thresh_white = Keyboard.MIN_TRESHOLD_WHITE
@@ -39,25 +37,25 @@ class Keyboard:
         self._populate_keys(img_clear_keyboard, white_start_key, black_start_key)
 
     def _populate_keys(self, img_clear_keyboard, white_start_key="A0", black_start_key="a0"):
-        self.white_keys = get_white_keys(clean_frame=img_clear_keyboard, start_key=white_start_key)
-        self.black_keys = get_black_keys(clean_frame=img_clear_keyboard, start_key=black_start_key)
+        white_keys = get_white_keys(clean_frame=img_clear_keyboard, start_key=white_start_key)
+        black_keys = get_black_keys(clean_frame=img_clear_keyboard, start_key=black_start_key)
 
         ordered_key_list = []
         white_key_idx = 0
         black_key_idx = 0
-        nb_black_keys = len(self.black_keys)
-        nb_white_keys = len(self.white_keys)
+        nb_black_keys = len(black_keys)
+        nb_white_keys = len(white_keys)
 
         while white_key_idx < nb_white_keys and black_key_idx < nb_black_keys:
-            if self.white_keys[white_key_idx].start_x <= self.black_keys[black_key_idx].start_x:
-                ordered_key_list.append(self.white_keys[white_key_idx])
+            if white_keys[white_key_idx].start_x <= black_keys[black_key_idx].start_x:
+                ordered_key_list.append(white_keys[white_key_idx])
                 white_key_idx += 1
             else:
-                ordered_key_list.append(self.black_keys[black_key_idx])
+                ordered_key_list.append(black_keys[black_key_idx])
                 black_key_idx += 1
 
         # One of the list is complete, fill with the rest
-        ordered_key_list += self.black_keys[black_key_idx:] if black_key_idx != nb_black_keys else self.white_keys[white_key_idx:]
+        ordered_key_list += black_keys[black_key_idx:] if black_key_idx != nb_black_keys else white_keys[white_key_idx:]
 
         first_double_white_key_idx = self.__find_first_consecutive_white_keys(key_list=ordered_key_list)
         second_double_white_key_idx = self.__find_first_consecutive_white_keys(key_list=ordered_key_list[first_double_white_key_idx+1:])
@@ -80,17 +78,6 @@ class Keyboard:
             # Error:
             self._logger.critical("Error while interpreting key notes")
             raise RuntimeError("Could not parse keyboard correctly")
-
-        # for note_idx in range(len(ordered_key_list)):
-        #     idx = (first_note_idx + note_idx) % len(key_detection.keyboard_note_list)
-        #     new_note = key_detection.keyboard_note_list[idx]
-
-
-        #     if (new_note.lower() == new_note) != ordered_key_list[note_idx].is_black():
-        #         self._logger.critical("Error while interpreting key notes -- no right order")
-        #         raise RuntimeError("Could not parse keyboard correctly")
-            
-        #     ordered_key_list[note_idx].note = new_note
         
         middle_key_idx = len(ordered_key_list) // 2
         nb_keyboard_notes = len(key_detection.keyboard_note_list)
@@ -119,7 +106,7 @@ class Keyboard:
                 self._logger.critical("Error while interpreting key notes -- no right order")
                 raise RuntimeError("Could not parse keyboard correctly")
             
-        print("test")
+        self.key_list = ordered_key_list
 
     @staticmethod
     def __find_first_consecutive_white_keys(key_list)-> int:
@@ -168,31 +155,34 @@ class Keyboard:
         #cv2.imshow("diff bot", diff_bot)
         #if t_value_bot >= Keyboard.MIN_TRESHOLD_BOT:
     
-        for key in self.white_keys:
+        for key in self.key_list:
+            
+            # White key:
+            if not key.is_black():
 
-            #print(f"Note {key.note} : {key.start_x} - {key.end_x} - {np.mean(thresh_bot[:,key.start_x:key.end_x] / 255)}")
-            if np.mean(thresh_bot[:,key.start_x:key.end_x] / 255) > self.min_diff_ratio_white_keys:
+                #print(f"Note {key.note} : {key.start_x} - {key.end_x} - {np.mean(thresh_bot[:,key.start_x:key.end_x] / 255)}")
+                if np.mean(thresh_bot[:,key.start_x:key.end_x] / 255) > self.min_diff_ratio_white_keys:
 
-                average_color = self.__get_average_key_color(key, current_image=current_bot)
+                    average_color = self.__get_average_key_color(key, current_image=current_bot)
 
-                visualization.display_color(average_color, "PressedKey color", level=logging.DEBUG)
+                    visualization.display_color(average_color, "PressedKey color", level=logging.DEBUG)
 
-                pressed_key = PressedKey(key, average_color)
-                pressed_keys.append(pressed_key)
+                    pressed_key = PressedKey(key, average_color)
+                    pressed_keys.append(pressed_key)
+            
+            # Black key:
+            else:
+               #print(f"Note {key.note} : {key.start_x} - {key.end_x} - {np.mean(thresh_top[:,key.start_x:key.end_x] / 255)}")
 
-        for key in self.black_keys:
+                if np.mean(thresh_top[:,key.start_x:key.end_x] / 255) > self.min_diff_ratio_black_keys:
 
-            #print(f"Note {key.note} : {key.start_x} - {key.end_x} - {np.mean(thresh_top[:,key.start_x:key.end_x] / 255)}")
+                    average_color = self.__get_average_key_color(key, current_image=current_top)
 
-            if np.mean(thresh_top[:,key.start_x:key.end_x] / 255) > self.min_diff_ratio_black_keys:
+                    visualization.display_color(average_color, "PressedKey color", level=logging.DEBUG)
 
-                average_color = self.__get_average_key_color(key, current_image=current_top)
-
-                visualization.display_color(average_color, "PressedKey color", level=logging.DEBUG)
-
-                pressed_key = PressedKey(key, average_color)
-                
-                pressed_keys.append(pressed_key)
+                    pressed_key = PressedKey(key, average_color)
+                    
+                    pressed_keys.append(pressed_key)
 
         return pressed_keys
     

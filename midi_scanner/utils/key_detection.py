@@ -62,7 +62,13 @@ def get_black_keys(clean_frame, start_key="a0") -> List[Key]:
 	# TODO
 	# remove small regions
 
+	# order from left to right:
+
+	
+
 	black_keys = []
+	# Sort by left
+	stats = stats[stats[:, 0].argsort()]
 	for label in range(1, num_labels):  # skip background
 		left, top, width, height, area = stats[label]
 		black_note = blackNoteString[offset + (label - 1) * 2: offset + (label - 1) * 2 + 2]

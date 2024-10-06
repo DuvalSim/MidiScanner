@@ -198,10 +198,13 @@ def get_black_white_color_clusters(note_list: List[PlayedNote], max_clusters=4, 
     w_best_num_clusters, w_centroids = get_color_clusters(white_colors,max_clusters=max_clusters, distance_threshold=distance_threshold)
 
     # At least one is not None
+    if b_best_num_clusters is None or w_best_num_clusters is None:
+        overall_num_clusters = b_best_num_clusters if b_best_num_clusters is not None else w_best_num_clusters
+        return overall_num_clusters, b_centroids, w_centroids 
+    
     overall_num_clusters = max(b_best_num_clusters, w_best_num_clusters)
     
-    if b_best_num_clusters is None or w_best_num_clusters is None:
-        return overall_num_clusters, b_centroids, w_centroids 
+    
 
     # Both have at least one cluster - pair them together with closest matching color ()
     # Fill missing clusters

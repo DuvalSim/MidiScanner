@@ -64,16 +64,13 @@ class Keyboard:
             self._logger.warning("Could not detect keyboard notes automatically")
             return
         
-        # convert to real idx in complete list
-        second_double_white_key_idx += first_double_white_key_idx + 1
-
-        if (second_double_white_key_idx - first_double_white_key_idx) == 5:
-            # First two consecutive white notes are B and C
-            first_note_idx = (key_detection.keyboard_note_list.index('B') - first_double_white_key_idx) % len(key_detection.keyboard_note_list)
-
-        elif (second_double_white_key_idx - first_double_white_key_idx) == 7:
-            # First two consecutive white notes are E and F
+        if second_double_white_key_idx == 6:
+            # First two consecutive white notes are E and F (because second are B and C)
             first_note_idx = (key_detection.keyboard_note_list.index('E') - first_double_white_key_idx) % len(key_detection.keyboard_note_list)
+
+        elif second_double_white_key_idx == 4:
+            # First two consecutive white notes are B and C (same logic)
+            first_note_idx = (key_detection.keyboard_note_list.index('B') - first_double_white_key_idx) % len(key_detection.keyboard_note_list)
         else:
             # Error:
             self._logger.critical("Error while interpreting key notes")
@@ -85,7 +82,7 @@ class Keyboard:
 
         # We want middle note to be 4th octave (C3 - A3)
         
-        middle_note_idx_transposed = nb_keyboard_notes * 3 + middle_note_idx
+        middle_note_idx_transposed = nb_keyboard_notes * 4 + middle_note_idx
 
         # Check that the keyboard on the left side has enough keys to fit all the notes
         while middle_note_idx_transposed < middle_key_idx:

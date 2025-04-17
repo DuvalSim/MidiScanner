@@ -10,7 +10,7 @@ import logging
 import tkinter as tk   # from tkinter import Tk for Python 3.x
 from tkinter.ttk import Progressbar 
 from tkinter.filedialog import askopenfilename
-from ctypes import windll
+# from ctypes import windll
 from midi_scanner.GUI.CroppingWindow import CroppingWindow
 from midi_scanner.GUI.SelectFrameWindow import SelectFrameWindow
 from midi_scanner.GUI.SelectVideoInfoWindow import VideoInfoWindow
@@ -34,7 +34,7 @@ import midi_scanner.utils.gui_utils as gui_utils
 import music21
 import subprocess
 
-windll.shcore.SetProcessDpiAwareness(1)
+# windll.shcore.SetProcessDpiAwareness(1)
 
 SELECT_FIRST_FRAME_LABEL= 'Select first frame (with clean keyboard)'
 SELECT_LAST_FRAME_LABEL = 'Select last frame to handle'
@@ -215,7 +215,8 @@ class ApplicationController:
 
         # # convert to xml with musescore
         
-        subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/musescore_parsed.musicxml", "./output_files/temp.mid"])
+        # subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/musescore_parsed.musicxml", "./output_files/temp.mid"])
+        subprocess.run(['/mnt/c/Program Files/MuseScore 3/bin/MuseScore3.exe', "--export-to","./output_files/musescore_parsed.musicxml", "./output_files/temp.mid"])
 
 
         parsed_score = music21.converter.parse("./output_files/musescore_parsed.musicxml")

@@ -1,5 +1,6 @@
 .venv
 .conda
+.vscode
 .DS_Store
 .idea
 
@@ -7,4 +8,5 @@
 
 *.pyc
 
-output_files
+output_files/*
+!output_files/.gitkeep

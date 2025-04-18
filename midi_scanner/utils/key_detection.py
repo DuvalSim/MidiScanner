@@ -8,7 +8,7 @@ from typing import List
 blackNoteString = "a0c1d1f1g1a1c2d2f2g2a2c3d3f3g3a3c4d4f4g4a4c5d5f5g5a5c6d6f6g6a6c7d7f7g7a7"
 whiteNoteString = "A0B0C1D1E1F1G1A1B1C2D2E2F2G2A2B2C3D3E3F3G3A3B3C4D4E4F4G4A4B4C5D5E5F5G5A5B5C6D6E6F6G6A6B6C7D7E7F7G7A7B7C8"
 
-keyboard_note_list = ['C','c', 'D','d', 'E', 'F','f', 'G', 'g','A', 'a', 'B']
+keyboard_note_list = ['C','c#', 'D','d#', 'E', 'F','f#', 'G', 'g#','A', 'a#', 'B']
 
 
 def _get_keys_from_lines(lines, start_key, img_width):
@@ -55,8 +55,8 @@ def get_black_keys(clean_frame, start_key="a0") -> List[Key]:
 	# Perform connected component labeling on the negative image
 	num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(dilated)
 
-	# display_connected_components(num_labels, labels, stats, centroids, blackNoteString)
-	# cv2.waitKey(0)
+	display_connected_components(num_labels, labels, stats, centroids, blackNoteString)
+	cv2.waitKey(0)
 	offset = blackNoteString.find(start_key)
 
 	# TODO
@@ -101,8 +101,8 @@ def get_white_keys(clean_frame, start_key = "A0") -> List[Key]:
 
 	white_notes = _get_keys_from_lines(lines_canny, start_key, im_bottom.shape[1])
 
-	# white_notes_img = put_white_notes_on_image(base_image=clean_frame.copy(), notes=white_notes)
+	white_notes_img = put_white_notes_on_image(base_image=clean_frame.copy(), notes=white_notes)
 
-	# cv2.imshow("notes", white_notes_img)
-	# cv2.waitKey(0)
+	cv2.imshow("notes", white_notes_img)
+	cv2.waitKey(0)
 	return white_notes

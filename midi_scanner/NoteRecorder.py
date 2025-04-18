@@ -108,7 +108,6 @@ class NoteRecorder:
         self._notes_played = []
         self._current_frame = 0
 
- 
         total_nb_frames = video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
         video_capture.set(cv2.CAP_PROP_POS_FRAMES,starting_frame)
 
@@ -152,11 +151,11 @@ class NoteRecorder:
                 status_callback((nb_frame/max_nb_frame)*100)
 
             
-            k = cv2.waitKey(0)
-            # Wait for a key press to exit
-            if (k == ord('q')) or (nb_frame >= max_nb_frame):
-                cv2.destroyAllWindows()
-                break
+            # k = cv2.waitKey(0)
+            # # Wait for a key press to exit
+            # if (k == ord('q')) or (nb_frame >= max_nb_frame):
+            #     cv2.destroyAllWindows()
+            #     break
             if (nb_frame >= max_nb_frame):
                 cv2.destroyAllWindows()
                 break

@@ -47,7 +47,8 @@ class Keyboard:
         nb_white_keys = len(white_keys)
 
         while white_key_idx < nb_white_keys and black_key_idx < nb_black_keys:
-            if white_keys[white_key_idx].start_x <= black_keys[black_key_idx].start_x:
+            # -1.5 to compensate for erosion.
+            if white_keys[white_key_idx].start_x < (black_keys[black_key_idx].start_x -1.5):
                 ordered_key_list.append(white_keys[white_key_idx])
                 white_key_idx += 1
             else:

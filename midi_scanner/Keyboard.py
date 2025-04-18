@@ -104,7 +104,11 @@ class Keyboard:
                 self._logger.critical("Error while interpreting key notes -- no right order")
                 raise RuntimeError("Could not parse keyboard correctly")
             
+        visualization.display_keyboard_notes(img_clear_keyboard, ordered_key_list, level=logging.DEBUG)
+        
         self.key_list = ordered_key_list
+
+        
 
     @staticmethod
     def __find_first_consecutive_white_keys(key_list)-> int:

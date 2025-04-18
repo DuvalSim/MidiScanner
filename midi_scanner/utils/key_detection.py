@@ -101,8 +101,8 @@ def get_white_keys(clean_frame, start_key = "A0") -> List[Key]:
 
 	white_notes = _get_keys_from_lines(lines_canny, start_key, im_bottom.shape[1])
 
-	white_notes_img = put_white_notes_on_image(base_image=clean_frame.copy(), notes=white_notes)
+	# white_notes_img = put_white_notes_on_image(base_image=clean_frame.copy(), notes=white_notes)
 
-	cv2.imshow("notes", white_notes_img)
-	cv2.waitKey(0)
+	# cv2.imshow("notes", white_notes_img)
+	# cv2.waitKey(0)
 	return white_notes

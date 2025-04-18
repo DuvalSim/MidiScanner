@@ -82,6 +82,7 @@ def display_connected_components(num_labels, labeled_image, stats, centroids, bl
 												fontFace=cv2.FONT_HERSHEY_COMPLEX, fontScale=0.4, color=(255, 255, 255), thickness=1)
 
 	cv2.imshow('Black keys image', img_notes)
+	cv2.imshow('Connected Components', colored_image)
 
 
 def put_white_notes_on_image(base_image, notes):
@@ -103,3 +104,37 @@ def display_pressed_keys(base_img, keys, level=logging.DEBUG):
 def display_color(color: MidiScannerColor, title : str = "Color", level:int = logging.DEBUG):
 	image = np.full((100, 100, 3), color.get_bgr()).astype(np.uint8)
 	logging.getLogger("Visualization").log_image_factory(image, title, level)
+
+def display_keyboard_notes(base_img, keys, level=logging.DEBUG):
+	
+	logger = logging.getLogger("Visualization")
+
+	if logger.isEnabledFor(level):
+		result_img = base_img.copy()
+
+		fontFace=cv2.FONT_HERSHEY_COMPLEX
+		fontScale=0.5
+		thickness=1
+
+		for key in keys:
+			
+			text = key.note
+			text_width, _ = cv2.getTextSize(text, fontFace=fontFace, fontScale=fontScale, thickness=thickness)[0]
+
+			CenterCoordinatesX = int(((key.start_x + key.end_x) / 2) -  (text_width / 2))
+
+			text_point = None
+			color = None
+
+			if key.is_black():
+				text_point = (CenterCoordinatesX, 20)
+				color = (0, 0, 255)
+				
+			else:
+				text_point = (CenterCoordinatesX, result_img.shape[0] - 10)
+				color = (255, 0, 0)
+
+			result_img = cv2.putText(result_img, text, text_point, fontFace=fontFace, fontScale=fontScale, thickness=thickness, color=color)
+	
+		logger.log_image_factory(result_img, "Detected Keys", level)
+		cv2.waitKey(0)

@@ -156,6 +156,7 @@ class NoteRecorder:
             # if (k == ord('q')) or (nb_frame >= max_nb_frame):
             #     cv2.destroyAllWindows()
             #     break
+
             if (nb_frame >= max_nb_frame):
                 cv2.destroyAllWindows()
                 break

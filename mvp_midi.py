@@ -2,7 +2,7 @@ import argparse
 
 from midi_scanner.GUI.AdjustSensibilityWindow import AdjustSensibilityWindow
 from midi_scanner.utils.StateSaver import StateSaver
-import dill
+import os
 from midi_scanner.NoteRecorder import NoteRecorder
 from midi_scanner.utils.ImageLogger import setup_image_logger
 import logging
@@ -210,16 +210,18 @@ class ApplicationController:
         note_writer = MidiWriter(note_played, note_part_idx_list, bpm, fps)
         score = note_writer.generate_score()
 
-        score.write('musicxml', fp='./output_files/temp.musicxml')
-        score.write('midi', fp='./output_files/temp.mid')
+        output_filename = os.path.split(music_video_filepath)[1].split('.')[0]
+
+        # score.write('musicxml', fp=f'./output_files/{output_filename}_temp.musicxml')
+        score.write('midi', fp=f'./output_files/{output_filename}_temp.mid')
 
         # # convert to xml with musescore
         
         # subprocess.run(['C:\\Program Files\\MuseScore 4\\bin\\MuseScore4.exe', "--export-to","./output_files/musescore_parsed.musicxml", "./output_files/temp.mid"])
-        subprocess.run(['/mnt/c/Program Files/MuseScore 3/bin/MuseScore3.exe', "--export-to","./output_files/musescore_parsed.musicxml", "./output_files/temp.mid"])
+        subprocess.run(['/mnt/c/Program Files/MuseScore 3/bin/MuseScore3.exe', "--export-to",f"./output_files/{output_filename}_musescore_parsed.musicxml", f"./output_files/{output_filename}_temp.mid"])
 
 
-        parsed_score = music21.converter.parse("./output_files/musescore_parsed.musicxml")
+        parsed_score = music21.converter.parse(f"./output_files/{output_filename}_musescore_parsed.musicxml")
         # Change the tempo:
 
         # Get all tempo markings in the score
@@ -237,7 +239,10 @@ class ApplicationController:
             parsed_score.insert(0, tempo_mark)
 
         # Optionally, save the modified score back to MusicXML
-        parsed_score.write('musicxml', './output_files/final_tempo.musicxml')
+        output_filename = os.path.split(music_video_filepath)[1].split('.')[0]
+        
+        parsed_score.write('musicxml', f'./output_files/{output_filename}.musicxml')
+        os.remove(f"./output_files/{output_filename}_musescore_parsed.musicxml")
 
         # Change TimeSignature:
         if timeSignature is not None:

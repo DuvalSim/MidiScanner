@@ -46,7 +46,7 @@ class VideoInfoWindow(FrameSliderWindowBase):
         
         
         tk.Label(info_frame, text="Select number of parts and key color for each part:").pack(anchor="w")
-        tk.Label(info_frame, text="Use detected color or pick one by selecting a part and click on the frame").pack(anchor="w")
+        tk.Label(info_frame, text="Use detected color or pick one by selecting a part and clicking on a colored key").pack(anchor="w")
 
 
         self.colors_frame = tk.Frame(info_frame)
@@ -100,6 +100,10 @@ class VideoInfoWindow(FrameSliderWindowBase):
         if self.nb_parts > self.min_parts:
             self.nb_parts -= 1
             self.refresh_colors()
+        if self.selected_picker[0] >= self.nb_parts:
+            self.selected_picker = (0,0)
+            self.color_pickers_dict[self.selected_picker].config(highlightthickness=1, highlightbackground="black")
+            self.color_pickers_dict[self.selected_picker].update()
 
     def on_img_click(self, event):
         """Handle mouse click event."""
@@ -118,9 +122,10 @@ class VideoInfoWindow(FrameSliderWindowBase):
     def on_color_picker_click(self, event, color_picker_id):
                
        if color_picker_id != self.selected_picker:
+
             self.color_pickers_dict[self.selected_picker].config(highlightthickness=0)
             self.color_pickers_dict[self.selected_picker].update()
-            
+
 
             self.color_pickers_dict[color_picker_id].config(highlightthickness=1, highlightbackground="black")
             self.color_pickers_dict[color_picker_id].update()

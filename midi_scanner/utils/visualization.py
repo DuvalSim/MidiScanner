@@ -118,7 +118,7 @@ def display_keyboard_notes(base_img, keys, level=logging.DEBUG):
 
 		for key in keys:
 			
-			text = key.note
+			text = key.note[:-1]
 			text_width, _ = cv2.getTextSize(text, fontFace=fontFace, fontScale=fontScale, thickness=thickness)[0]
 
 			CenterCoordinatesX = int(((key.start_x + key.end_x) / 2) -  (text_width / 2))

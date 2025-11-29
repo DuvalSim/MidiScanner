@@ -43,8 +43,8 @@ def get_clusters(note_list):
         kmeans.fit(X)
         sse.append(kmeans.inertia_)
 
-    plt.plot(range(1,9), sse)
-    plt.show()
+    # plt.plot(range(1,9), sse)
+    # plt.show()
 
     # we assume inertia is going down 
     

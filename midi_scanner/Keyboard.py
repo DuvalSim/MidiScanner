@@ -104,7 +104,7 @@ class Keyboard:
                 self._logger.critical("Error while interpreting key notes -- no right order")
                 raise RuntimeError("Could not parse keyboard correctly")
             
-        visualization.display_keyboard_notes(img_clear_keyboard, ordered_key_list, level=logging.DEBUG)
+        visualization.display_keyboard_notes(img_clear_keyboard, ordered_key_list, level=logging.INFO)
         
         self.key_list = ordered_key_list
 
@@ -147,8 +147,6 @@ class Keyboard:
         if t_value_top < self.min_binary_thresh_black:
             thresh_top = cv2.threshold(diff_top, self.min_binary_thresh_black, 255, cv2.THRESH_BINARY)[1]
         #print("thresh value top - ", t_value_top)
-
-        
 
         pressed_keys = []
 

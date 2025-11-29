@@ -30,9 +30,7 @@ def detect_white_keys(im_bw, startKey):
     imheight = im_bw.shape[0]
 
     im_bottom = im_bw[int(imheight - (imheight / 5)):imheight, :]
-    cv2.imwrite("./data/im_bottom.jpg", im_bottom)
-    cv2.imshow("im_bot", im_bottom)
-    cv2.waitKey(0)
+
     [gap_width, wk_width, start] = findAverageWidths(im_bottom)
     print("average_widths")
     print(gap_width, wk_width, start)

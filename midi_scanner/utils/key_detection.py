@@ -55,8 +55,8 @@ def get_black_keys(clean_frame, start_key="a0") -> List[Key]:
 	# Perform connected component labeling on the negative image
 	num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(dilated)
 
-	display_connected_components(num_labels, labels, stats, centroids, blackNoteString)
-	cv2.waitKey(0)
+	#display_connected_components(num_labels, labels, stats, centroids, blackNoteString)
+	#cv2.waitKey(0)
 	offset = blackNoteString.find(start_key)
 
 	# TODO
@@ -93,7 +93,7 @@ def get_white_keys(clean_frame, start_key = "A0") -> List[Key]:
 
 	canny_binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 	canny_binary = cv2.Canny(canny_binary, threshold1=120, threshold2=200)
-	cv2.imshow("canny", canny_binary)
+	# cv2.imshow("canny", canny_binary)
 	# Get lines with theta = 0 (vertical lines)
 	lines_canny = cv2.HoughLines(canny_binary, rho=1, theta=np.pi / 180, threshold=20, min_theta=0, max_theta=np.pi / 180)
 
@@ -103,6 +103,4 @@ def get_white_keys(clean_frame, start_key = "A0") -> List[Key]:
 
 	# white_notes_img = put_white_notes_on_image(base_image=clean_frame.copy(), notes=white_notes)
 
-	# cv2.imshow("notes", white_notes_img)
-	# cv2.waitKey(0)
 	return white_notes
